@@ -7,12 +7,19 @@ export default async function Oportunidades() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white p-10">
-        <h1 className="text-4xl font-bold">Error cargando oportunidades</h1>
-      </main>
-    );
-  }
+  console.error("Error Supabase:", error);
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-white p-10">
+      <h1 className="text-4xl font-bold mb-4">
+        Error cargando oportunidades
+      </h1>
+      <pre className="text-red-400">
+        {JSON.stringify(error, null, 2)}
+      </pre>
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-slate-950 text-white p-10">

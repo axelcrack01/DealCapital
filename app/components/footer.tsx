@@ -56,7 +56,7 @@ export default function Footer() {
               <li>contacto@dealcapital.pe</li>
               <li>Lima, Perú</li>
               <li>
-                <a href="#">
+                <a href="https://www.linkedin.com/company/dealcapital/?lipi=urn%3Ali%3Apage%3Ad_flagship3_search_srp_all%3B6yCEOgq0TbK34KPHvA%2F5rg%3D%3D">
                   LinkedIn
                 </a>
               </li>

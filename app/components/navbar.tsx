@@ -54,6 +54,10 @@ export default function Navbar() {
 
         {userName ? (
           <div className="flex items-center gap-4">
+
+            <a href="/dashboard" className="text-slate-300 hover:text-yellow-400">
+  Dashboard
+</a>
             <a href="/perfil">
               {fotoUrl ? (
                 <img

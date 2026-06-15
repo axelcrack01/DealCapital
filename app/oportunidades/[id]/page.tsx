@@ -1,105 +1,161 @@
-"use client";
-
-import { use, useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
-export default function InteresProyecto({
+export const dynamic = "force-dynamic";
+
+export default async function DetalleProyecto({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id } = await params;
 
-  const [form, setForm] = useState({
-    nombre: "",
-    email: "",
-    mensaje: "",
-  });
+  const { data: proyecto } = await supabase
+    .from("proyectos")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  const [mensajeEstado, setMensajeEstado] = useState("");
-
-  useEffect(() => {
-    const verificarSesion = async () => {
-      const { data } = await supabase.auth.getUser();
-
-      if (!data.user) {
-        window.location.href = "/login";
-      }
-    };
-
-    verificarSesion();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const { error } = await supabase.from("interesados").insert([
-      {
-        proyecto_id: Number(id),
-        nombre: form.nombre,
-        email: form.email,
-        mensaje: form.mensaje,
-      },
-    ]);
-
-    if (error) {
-      alert(JSON.stringify(error, null, 2));
-      setMensajeEstado("Error al enviar interés.");
-      return;
-    }
-
-    setMensajeEstado("Interés enviado correctamente.");
-    setForm({ nombre: "", email: "", mensaje: "" });
-  };
+  if (!proyecto) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-white p-10">
+        <h1 className="text-4xl font-bold">Proyecto no encontrado</h1>
+      </main>
+    );
+  }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-10">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-5xl font-bold mb-8">Estoy interesado</h1>
+    <main className="min-h-screen bg-slate-950 text-white px-6 py-20">
+      <section className="max-w-6xl mx-auto">
+        <a href="/oportunidades" className="text-yellow-400">
+          ← Volver a oportunidades
+        </a>
 
-        <p className="text-slate-300 mb-8">
-          Completa tus datos para que el emprendedor pueda contactarte.
-        </p>
+        <div className="mt-8 grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-slate-900 p-8 rounded-2xl">
+              <p className="text-yellow-400 font-semibold mb-3">
+                {proyecto.industria || "Proyecto"}
+              </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-slate-900 p-8 rounded-2xl space-y-6"
-        >
-          <input
-            type="text"
-            placeholder="Tu nombre completo"
-            value={form.nombre}
-            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-            className="w-full p-4 rounded-xl bg-slate-800"
-            required
-          />
+              <h1 className="text-5xl font-bold mb-6">
+                {proyecto.nombre_proyecto}
+              </h1>
 
-          <input
-            type="email"
-            placeholder="Tu correo electrónico"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full p-4 rounded-xl bg-slate-800"
-            required
-          />
+              <p className="text-slate-300 text-lg">
+                {proyecto.descripcion}
+              </p>
+            </div>
 
-          <textarea
-            placeholder="Mensaje para el emprendedor"
-            rows={5}
-            value={form.mensaje}
-            onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
-            className="w-full p-4 rounded-xl bg-slate-800"
-          />
+            <div className="bg-slate-900 p-8 rounded-2xl">
+              <h2 className="text-3xl font-bold mb-4">Equipo fundador</h2>
+              <p className="text-slate-300">
+                {proyecto.equipo_fundador || "Información no disponible."}
+              </p>
+            </div>
 
-          <button className="w-full bg-yellow-500 text-black py-4 rounded-xl font-bold">
-            Enviar interés
-          </button>
-        </form>
+            <div className="bg-slate-900 p-8 rounded-2xl">
+              <h2 className="text-3xl font-bold mb-4">Proyecciones</h2>
+              <p className="text-slate-300">
+                {proyecto.proyecciones || "Información no disponible."}
+              </p>
+            </div>
 
-        {mensajeEstado && (
-          <p className="mt-6 text-yellow-400 font-semibold">{mensajeEstado}</p>
-        )}
-      </div>
+            <div className="bg-slate-900 p-8 rounded-2xl">
+              <h2 className="text-3xl font-bold mb-4">Riesgos</h2>
+              <p className="text-slate-300">
+                {proyecto.riesgos || "Información no disponible."}
+              </p>
+            </div>
+
+            {proyecto.video_pitch && (
+              <div className="bg-slate-900 p-8 rounded-2xl">
+                <h2 className="text-3xl font-bold mb-4">Video pitch</h2>
+                <a
+                  href={proyecto.video_pitch}
+                  target="_blank"
+                  className="text-yellow-400 underline"
+                >
+                  Ver video pitch
+                </a>
+              </div>
+            )}
+
+            {proyecto.documentos_url && (
+              <div className="bg-slate-900 p-8 rounded-2xl">
+                <h2 className="text-3xl font-bold mb-4">Documentos</h2>
+                <a
+                  href={proyecto.documentos_url}
+                  target="_blank"
+                  className="text-yellow-400 underline"
+                >
+                  Ver documentos adjuntos
+                </a>
+              </div>
+            )}
+          </div>
+
+          <aside className="space-y-6">
+            <div className="bg-slate-900 p-8 rounded-2xl sticky top-28">
+              <h2 className="text-3xl font-bold mb-6">Resumen de inversión</h2>
+
+              <div className="space-y-4 text-slate-300">
+                <p>
+                  <span className="text-slate-500">Monto solicitado:</span>
+                  <br />
+                  <b className="text-white text-2xl">
+                    S/ {proyecto.capital_requerido}
+                  </b>
+                </p>
+
+                <p>
+                  <span className="text-slate-500">Monto recaudado:</span>
+                  <br />
+                  <b className="text-white">
+                    S/ {proyecto.monto_recaudado || 0}
+                  </b>
+                </p>
+
+                <p>
+                  <span className="text-slate-500">Retorno ofrecido:</span>
+                  <br />
+                  {proyecto.retorno_ofrecido || "Por negociar"}
+                </p>
+
+                <p>
+                  <span className="text-slate-500">ROI estimado:</span>
+                  <br />
+                  {proyecto.roi_estimado || "No especificado"}
+                </p>
+
+                <p>
+                  <span className="text-slate-500">Plazo:</span>
+                  <br />
+                  {proyecto.plazo || "No especificado"}
+                </p>
+
+                <p>
+                  <span className="text-slate-500">Nivel de riesgo:</span>
+                  <br />
+                  {proyecto.riesgo || "No especificado"}
+                </p>
+
+                <p>
+                  <span className="text-slate-500">Contacto:</span>
+                  <br />
+                  {proyecto.email}
+                </p>
+              </div>
+
+              <a
+                href={`/interes/${proyecto.id}`}
+                className="block text-center mt-8 bg-yellow-500 text-black px-8 py-4 rounded-xl font-bold hover:bg-yellow-400"
+              >
+                Estoy interesado
+              </a>
+            </div>
+          </aside>
+        </div>
+      </section>
     </main>
   );
 }

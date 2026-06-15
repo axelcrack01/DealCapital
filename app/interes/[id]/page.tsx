@@ -19,31 +19,34 @@ export default function InteresProyecto({
   const [mensajeEstado, setMensajeEstado] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const { error } = await supabase.from("interesados").insert([
-      {
-        proyecto_id: Number(id),
-        nombre: form.nombre,
-        email: form.email,
-        mensaje: form.mensaje,
-      },
-    ]);
+  const { data } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error(error);
-      setMensajeEstado("Error al enviar interés.");
-      return;
-    }
+  if (!data.user) {
+    window.location.href = "/login";
+    return;
+  }
 
-    setMensajeEstado("Interés enviado correctamente.");
+  const { error } = await supabase.from("interesados").insert([
+    {
+      proyecto_id: Number(id),
+      inversionista_id: data.user.id,
+      nombre: form.nombre,
+      email: form.email,
+      mensaje: form.mensaje,
+    },
+  ]);
 
-    setForm({
-      nombre: "",
-      email: "",
-      mensaje: "",
-    });
-  };
+  if (error) {
+    alert(JSON.stringify(error, null, 2));
+    setMensajeEstado("Error al enviar interés.");
+    return;
+  }
+
+  setMensajeEstado("Interés enviado correctamente.");
+  setForm({ nombre: "", email: "", mensaje: "" });
+};
 
   return (
     <main className="min-h-screen bg-slate-950 text-white p-10">

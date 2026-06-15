@@ -21,6 +21,7 @@ export default function PublicarProyecto() {
 
       if (!data.user) {
         window.location.href = "/login";
+        return;
       }
     };
 
@@ -39,14 +40,24 @@ export default function PublicarProyecto() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Obtener usuario actual
+    const { data } = await supabase.auth.getUser();
+
+    if (!data.user) {
+      window.location.href = "/login";
+      return;
+    }
+
     const { error } = await supabase.from("proyectos").insert([
       {
         ...form,
+        user_id: data.user.id,
         capital_requerido: Number(form.capital_requerido),
       },
     ]);
 
     if (error) {
+      console.error(error);
       alert(JSON.stringify(error, null, 2));
       setMensaje("Error al publicar el proyecto.");
       return;
@@ -66,7 +77,9 @@ export default function PublicarProyecto() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-white p-10">
-      <h1 className="text-5xl font-bold mb-10">Publicar Proyecto</h1>
+      <h1 className="text-5xl font-bold mb-10">
+        Publicar Proyecto
+      </h1>
 
       <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
         <input
@@ -125,12 +138,19 @@ export default function PublicarProyecto() {
           className="w-full p-4 rounded-xl bg-slate-900"
         />
 
-        <button className="bg-yellow-500 text-black px-8 py-4 rounded-xl font-bold">
+        <button
+          type="submit"
+          className="bg-yellow-500 hover:bg-yellow-400 text-black px-8 py-4 rounded-xl font-bold transition"
+        >
           Publicar Proyecto
         </button>
       </form>
 
-      {mensaje && <p className="mt-6 text-yellow-400">{mensaje}</p>}
+      {mensaje && (
+        <p className="mt-6 text-yellow-400 font-semibold">
+          {mensaje}
+        </p>
+      )}
     </main>
   );
 }

@@ -26,6 +26,7 @@ export default function Perfil() {
     monto_maximo: "",
     sectores_interes: "",
     tipo_inversionista: "",
+    perfil_verificado: false,
   });
 
   useEffect(() => {
@@ -177,6 +178,13 @@ export default function Perfil() {
                 }
                 className="w-full p-4 rounded-xl bg-slate-800"
               />
+              <div className="flex gap-3 mt-3">
+  {perfil.perfil_verificado && (
+    <span className="bg-green-600 px-3 py-1 rounded-full text-sm">
+      ✅ Perfil verificado
+    </span>
+  )}
+</div>
 
               <input
                 placeholder="Correo"

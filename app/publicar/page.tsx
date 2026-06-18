@@ -19,7 +19,7 @@ export default function PublicarProyecto() {
     proyecciones: "",
     riesgos: "",
     equipo_fundador: "",
-    documentos_url: "",
+    documento_pdf: "",
   });
 
   const [mensaje, setMensaje] = useState("");
@@ -27,10 +27,7 @@ export default function PublicarProyecto() {
   useEffect(() => {
     const verificarSesion = async () => {
       const { data } = await supabase.auth.getUser();
-
-      if (!data.user) {
-        window.location.href = "/login";
-      }
+      if (!data.user) window.location.href = "/login";
     };
 
     verificarSesion();
@@ -40,6 +37,46 @@ export default function PublicarProyecto() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const subirDocumento = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      setMensaje("Solo se permiten archivos PDF.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMensaje("El documento debe pesar menos de 5MB.");
+      return;
+    }
+
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) {
+      window.location.href = "/login";
+      return;
+    }
+
+    const fileName = `${data.user.id}-${Date.now()}-${file.name}`;
+
+    const { error } = await supabase.storage
+      .from("documentos")
+      .upload(fileName, file);
+
+    if (error) {
+      alert(JSON.stringify(error, null, 2));
+      setMensaje("Error al subir documento.");
+      return;
+    }
+
+    const { data: publicUrl } = supabase.storage
+      .from("documentos")
+      .getPublicUrl(fileName);
+
+    setForm({ ...form, documento_pdf: publicUrl.publicUrl });
+    setMensaje("Documento subido correctamente.");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,24 +104,6 @@ export default function PublicarProyecto() {
     }
 
     setMensaje("Proyecto publicado correctamente.");
-
-    setForm({
-      nombre_proyecto: "",
-      emprendedor: "",
-      email: "",
-      capital_requerido: "",
-      descripcion: "",
-      retorno_ofrecido: "",
-      industria: "",
-      plazo: "",
-      riesgo: "",
-      roi_estimado: "",
-      video_pitch: "",
-      proyecciones: "",
-      riesgos: "",
-      equipo_fundador: "",
-      documentos_url: "",
-    });
   };
 
   return (
@@ -92,56 +111,28 @@ export default function PublicarProyecto() {
       <section className="max-w-4xl mx-auto">
         <h1 className="text-5xl font-bold mb-4">Publicar Proyecto</h1>
 
-        <p className="text-slate-300 mb-10">
-          Presenta tu proyecto de forma clara para atraer inversionistas.
-        </p>
-
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="bg-slate-900 p-8 rounded-2xl space-y-5">
-            <h2 className="text-2xl font-bold">Información principal</h2>
-
-            <input name="nombre_proyecto" value={form.nombre_proyecto} onChange={handleChange} placeholder="Nombre del proyecto" className="w-full p-4 rounded-xl bg-slate-800" required />
-
-            <input name="emprendedor" value={form.emprendedor} onChange={handleChange} placeholder="Nombre del emprendedor" className="w-full p-4 rounded-xl bg-slate-800" required />
-
-            <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="Correo de contacto" className="w-full p-4 rounded-xl bg-slate-800" required />
-
-            <textarea name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Describe tu proyecto" rows={6} className="w-full p-4 rounded-xl bg-slate-800" required />
-
-            <input name="equipo_fundador" value={form.equipo_fundador} onChange={handleChange} placeholder="Equipo fundador" className="w-full p-4 rounded-xl bg-slate-800" />
-          </div>
+          {/* Mantén aquí todos tus inputs actuales */}
 
           <div className="bg-slate-900 p-8 rounded-2xl space-y-5">
-            <h2 className="text-2xl font-bold">Datos de inversión</h2>
+            <h2 className="text-2xl font-bold">Documentos</h2>
 
-            <input name="capital_requerido" type="number" value={form.capital_requerido} onChange={handleChange} placeholder="Monto solicitado" className="w-full p-4 rounded-xl bg-slate-800" required />
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={subirDocumento}
+              className="w-full p-4 rounded-xl bg-slate-800"
+            />
 
-            <input name="retorno_ofrecido" value={form.retorno_ofrecido} onChange={handleChange} placeholder="Retorno ofrecido, ejemplo: 15% en 6 meses" className="w-full p-4 rounded-xl bg-slate-800" />
-
-            <input name="roi_estimado" value={form.roi_estimado} onChange={handleChange} placeholder="ROI estimado" className="w-full p-4 rounded-xl bg-slate-800" />
-
-            <input name="plazo" value={form.plazo} onChange={handleChange} placeholder="Plazo estimado, ejemplo: 6 meses" className="w-full p-4 rounded-xl bg-slate-800" />
-
-            <select name="riesgo" value={form.riesgo} onChange={handleChange} className="w-full p-4 rounded-xl bg-slate-800">
-              <option value="">Nivel de riesgo</option>
-              <option value="Bajo">Bajo</option>
-              <option value="Medio">Medio</option>
-              <option value="Alto">Alto</option>
-            </select>
-
-            <input name="industria" value={form.industria} onChange={handleChange} placeholder="Industria: tecnología, gastronomía, retail..." className="w-full p-4 rounded-xl bg-slate-800" />
-          </div>
-
-          <div className="bg-slate-900 p-8 rounded-2xl space-y-5">
-            <h2 className="text-2xl font-bold">Pitch y análisis</h2>
-
-            <input name="video_pitch" value={form.video_pitch} onChange={handleChange} placeholder="Link de video pitch" className="w-full p-4 rounded-xl bg-slate-800" />
-
-            <textarea name="proyecciones" value={form.proyecciones} onChange={handleChange} placeholder="Proyecciones del proyecto" rows={5} className="w-full p-4 rounded-xl bg-slate-800" />
-
-            <textarea name="riesgos" value={form.riesgos} onChange={handleChange} placeholder="Riesgos del proyecto" rows={5} className="w-full p-4 rounded-xl bg-slate-800" />
-
-            <input name="documentos_url" value={form.documentos_url} onChange={handleChange} placeholder="Link a documentos, pitch deck o evidencias" className="w-full p-4 rounded-xl bg-slate-800" />
+            {form.documento_pdf && (
+              <a
+                href={form.documento_pdf}
+                target="_blank"
+                className="block text-yellow-400 underline"
+              >
+                Ver documento subido
+              </a>
+            )}
           </div>
 
           <button className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-xl font-bold transition">

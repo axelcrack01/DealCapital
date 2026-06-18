@@ -37,9 +37,15 @@ export default async function DetalleProyecto({
                 {proyecto.industria || "Proyecto"}
               </p>
 
-              <h1 className="text-5xl font-bold mb-6">
+              <h1 className="text-5xl font-bold mb-4">
                 {proyecto.nombre_proyecto}
               </h1>
+
+              {proyecto.proyecto_verificado && (
+                <span className="inline-block mb-6 bg-green-600 px-4 py-2 rounded-full">
+                  ✅ Proyecto revisado
+                </span>
+              )}
 
               <p className="text-slate-300 text-lg">
                 {proyecto.descripcion}
@@ -80,15 +86,16 @@ export default async function DetalleProyecto({
               </div>
             )}
 
-            {proyecto.documentos_url && (
+            {proyecto.documento_pdf && (
               <div className="bg-slate-900 p-8 rounded-2xl">
-                <h2 className="text-3xl font-bold mb-4">Documentos</h2>
+                <h2 className="text-3xl font-bold mb-4">Documento adjunto</h2>
+
                 <a
-                  href={proyecto.documentos_url}
+                  href={proyecto.documento_pdf}
                   target="_blank"
-                  className="text-yellow-400 underline"
+                  className="inline-block bg-yellow-500 text-black px-6 py-3 rounded-xl font-bold"
                 >
-                  Ver documentos adjuntos
+                  Ver Pitch Deck / PDF
                 </a>
               </div>
             )}

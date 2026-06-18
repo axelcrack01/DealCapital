@@ -28,7 +28,18 @@ export default function InteresProyecto({
     return;
   }
 
-  const { error } = await supabase.from("interesados").insert([
+  const { data: proyecto, error: proyectoError } = await supabase
+    .from("proyectos")
+    .select("user_id")
+    .eq("id", id)
+    .single();
+
+  if (proyectoError || !proyecto) {
+    alert("No se encontró el proyecto.");
+    return;
+  }
+
+  const { error: interesError } = await supabase.from("interesados").insert([
     {
       proyecto_id: Number(id),
       inversionista_id: data.user.id,
@@ -38,14 +49,44 @@ export default function InteresProyecto({
     },
   ]);
 
-  if (error) {
-    alert(JSON.stringify(error, null, 2));
-    setMensajeEstado("Error al enviar interés.");
+  if (interesError) {
+    alert(JSON.stringify(interesError, null, 2));
     return;
   }
 
-  setMensajeEstado("Interés enviado correctamente.");
-  setForm({ nombre: "", email: "", mensaje: "" });
+  const { data: conversacion, error: conversacionError } = await supabase
+    .from("conversaciones")
+    .insert([
+      {
+        proyecto_id: Number(id),
+        emprendedor_id: proyecto.user_id,
+        inversionista_id: data.user.id,
+      },
+    ])
+    .select()
+    .single();
+
+  if (conversacionError) {
+    alert(JSON.stringify(conversacionError, null, 2));
+    return;
+  }
+
+  if (form.mensaje.trim()) {
+    const { error: mensajeError } = await supabase.from("mensajes").insert([
+      {
+        conversacion_id: conversacion.id,
+        sender_id: data.user.id,
+        contenido: form.mensaje,
+      },
+    ]);
+
+    if (mensajeError) {
+      alert(JSON.stringify(mensajeError, null, 2));
+      return;
+    }
+  }
+
+  window.location.href = `/mensajes/${conversacion.id}`;
 };
 
   return (

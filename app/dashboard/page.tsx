@@ -53,18 +53,32 @@ export default function Dashboard() {
       }
 
       if (profile?.tipo_usuario === "inversionista") {
-        const { data: oportunidades } = await supabase
+        const { data: todosProyectos } = await supabase
           .from("proyectos")
           .select("*")
-          .order("created_at", { ascending: false })
-          .limit(6);
+          .order("created_at", { ascending: false });
+
+        const sectores = (profile.sectores_interes || "")
+          .toLowerCase()
+          .split(",")
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+
+        const recomendados =
+          sectores.length > 0
+            ? (todosProyectos || []).filter((p) =>
+                sectores.some((s: string) =>
+                  (p.industria || "").toLowerCase().includes(s)
+                )
+              )
+            : todosProyectos || [];
 
         const { data: misCompromisos } = await supabase
           .from("compromisos")
           .select("*, proyectos(nombre_proyecto)")
           .eq("inversionista_id", data.user.id);
 
-        setProyectos(oportunidades || []);
+        setProyectos(recomendados.slice(0, 6));
         setCompromisos(misCompromisos || []);
       }
     };
@@ -109,14 +123,8 @@ export default function Dashboard() {
               <Card title="Mis proyectos" value={proyectos.length} />
               <Card title="Interesados" value={interesados.length} />
               <Card title="Compromisos pendientes" value={compromisosPendientes} />
-              <Card
-                title="Capital solicitado"
-                value={`S/ ${capitalSolicitado.toLocaleString("es-PE")}`}
-              />
-              <Card
-                title="Capital recaudado"
-                value={`S/ ${capitalRecaudado.toLocaleString("es-PE")}`}
-              />
+              <Card title="Capital solicitado" value={`S/ ${capitalSolicitado.toLocaleString("es-PE")}`} />
+              <Card title="Capital recaudado" value={`S/ ${capitalRecaudado.toLocaleString("es-PE")}`} />
             </div>
 
             <h2 className="text-3xl font-bold mb-6">Mis proyectos</h2>
@@ -135,29 +143,13 @@ export default function Dashboard() {
 
                 return (
                   <div key={p.id} className="bg-slate-900 p-6 rounded-2xl">
-                    <div className="flex justify-between gap-4">
-                      <div>
-                        <h3 className="text-xl font-bold">
-                          {p.nombre_proyecto}
-                        </h3>
-                        <p className="text-slate-300">{p.descripcion}</p>
-                      </div>
-
-                      <a
-                        href={`/oportunidades/${p.id}`}
-                        className="text-yellow-400"
-                      >
-                        Ver
-                      </a>
-                    </div>
+                    <h3 className="text-xl font-bold">{p.nombre_proyecto}</h3>
+                    <p className="text-slate-300">{p.descripcion}</p>
 
                     <div className="mt-5">
                       <div className="flex justify-between text-sm text-slate-400 mb-2">
                         <span>Financiamiento</span>
-                        <span>
-                          S/ {p.monto_recaudado || 0} / S/{" "}
-                          {p.capital_requerido}
-                        </span>
+                        <span>{Math.round(progreso)}%</span>
                       </div>
 
                       <div className="w-full bg-slate-800 rounded-full h-3">
@@ -172,9 +164,7 @@ export default function Dashboard() {
               })}
             </div>
 
-            <h2 className="text-3xl font-bold mb-6">
-              Compromisos recibidos
-            </h2>
+            <h2 className="text-3xl font-bold mb-6">Compromisos recibidos</h2>
 
             <div className="space-y-4 mb-12">
               {compromisos.map((c) => (
@@ -210,7 +200,7 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="grid md:grid-cols-4 gap-6 mb-12">
-              <Card title="Oportunidades" value={proyectos.length} />
+              <Card title="Recomendadas" value={proyectos.length} />
               <Card title="Mis compromisos" value={compromisos.length} />
               <Card
                 title="Monto comprometido"
@@ -224,45 +214,46 @@ export default function Dashboard() {
               />
             </div>
 
-            <h2 className="text-3xl font-bold mb-6">Mis compromisos</h2>
-
-            <div className="space-y-4 mb-12">
-              {compromisos.map((c) => (
-                <div key={c.id} className="bg-slate-900 p-6 rounded-2xl">
-                  <h3 className="text-xl font-bold">
-                    {c.proyectos?.nombre_proyecto || "Proyecto"}
-                  </h3>
-                  <p className="text-yellow-400">
-                    S/ {Number(c.monto).toLocaleString("es-PE")}
-                  </p>
-                  <p>Estado: {c.estado}</p>
-                </div>
-              ))}
-            </div>
-
-            <h2 className="text-3xl font-bold mb-6">
-              Oportunidades recomendadas
+            <h2 className="text-3xl font-bold mb-2">
+              Oportunidades recomendadas para ti
             </h2>
+
+            <p className="text-slate-400 mb-6">
+              Basado en tus sectores de interés:{" "}
+              {perfil.sectores_interes || "aún no configurado"}
+            </p>
 
             <div className="grid md:grid-cols-3 gap-6">
               {proyectos.map((p) => (
-                <div key={p.id} className="bg-slate-900 p-6 rounded-2xl">
-                  <h3 className="text-xl font-bold mb-2">
-                    {p.nombre_proyecto}
-                  </h3>
+                <div key={p.id} className="bg-slate-900 rounded-2xl overflow-hidden">
+                  {p.imagen_url && (
+                    <img
+                      src={p.imagen_url}
+                      alt={p.nombre_proyecto}
+                      className="w-full h-40 object-cover"
+                    />
+                  )}
 
-                  <p className="text-slate-300 mb-4">{p.descripcion}</p>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2">
+                      {p.nombre_proyecto}
+                    </h3>
 
-                  <p className="text-yellow-400 mb-4">
-                    S/ {p.capital_requerido}
-                  </p>
+                    <p className="text-yellow-400 mb-2">
+                      {p.industria || "Proyecto"}
+                    </p>
 
-                  <a
-                    href={`/oportunidades/${p.id}`}
-                    className="block text-center bg-yellow-500 text-black py-3 rounded-xl font-bold"
-                  >
-                    Ver oportunidad
-                  </a>
+                    <p className="text-slate-300 mb-4 line-clamp-3">
+                      {p.descripcion}
+                    </p>
+
+                    <a
+                      href={`/oportunidades/${p.id}`}
+                      className="block text-center bg-yellow-500 text-black py-3 rounded-xl font-bold"
+                    >
+                      Ver oportunidad
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>

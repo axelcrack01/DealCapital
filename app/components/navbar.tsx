@@ -38,20 +38,23 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-[#020817]/95 border-b border-slate-800 backdrop-blur">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-
         <a href="/" className="flex items-center gap-3 shrink-0">
-          <img src="/logo.png" alt="DealCapital" className="w-11 h-11 bg-white p-1" />
+          <img
+            src="/logo.png"
+            alt="DealCapital"
+            className="w-11 h-11 bg-white p-1"
+          />
           <span className="text-xl font-extrabold text-white">
             Deal<span className="text-yellow-400">Capital</span>
           </span>
         </a>
 
         <div className="hidden lg:flex items-center gap-7 text-slate-200 font-medium">
-          <a href="/">Inicio</a>
-          <a href="/nosotros">Nosotros</a>
-          <a href="/oportunidades">Oportunidades</a>
-          <a href="/inversionistas">Inversionistas</a>
-          <a href="/contacto">Contacto</a>
+          <a href="/" className="hover:text-yellow-400">Inicio</a>
+          <a href="/nosotros" className="hover:text-yellow-400">Nosotros</a>
+          <a href="/oportunidades" className="hover:text-yellow-400">Oportunidades</a>
+          <a href="/inversionistas" className="hover:text-yellow-400">Inversionistas</a>
+          <a href="/contacto" className="hover:text-yellow-400">Contacto</a>
         </div>
 
         {!userName ? (
@@ -62,7 +65,7 @@ export default function Navbar() {
 
             <a
               href="/registro"
-              className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold"
+              className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold hover:bg-yellow-400"
             >
               Registrarse
             </a>
@@ -105,6 +108,7 @@ export default function Navbar() {
             <a href="/mensajes" className="hover:text-yellow-400">Mensajes</a>
             <a href="/notificaciones" className="hover:text-yellow-400">Notificaciones</a>
             <a href="/compromisos" className="hover:text-yellow-400">Compromisos</a>
+            <a href="/favoritos" className="hover:text-yellow-400">Favoritos</a>
             <a href="/analitica" className="hover:text-yellow-400">Analítica</a>
             <a href="/perfil" className="hover:text-yellow-400">Mi perfil</a>
 

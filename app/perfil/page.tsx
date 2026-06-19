@@ -27,6 +27,7 @@ export default function Perfil() {
     sectores_interes: "",
     tipo_inversionista: "",
     perfil_verificado: false,
+    empresa_verificada: false,
   });
 
   useEffect(() => {
@@ -53,6 +54,8 @@ export default function Perfil() {
           capital_disponible: profile.capital_disponible || "",
           monto_minimo: profile.monto_minimo || "",
           monto_maximo: profile.monto_maximo || "",
+          perfil_verificado: profile.perfil_verificado || false,
+          empresa_verificada: profile.empresa_verificada || false,
         });
       } else {
         setPerfil({
@@ -160,12 +163,27 @@ export default function Perfil() {
                 <label className="block mb-2 text-slate-300">
                   Foto de perfil
                 </label>
+
                 <input
                   type="file"
                   accept="image/png, image/jpeg, image/webp"
                   onChange={subirFoto}
                   className="w-full p-4 rounded-xl bg-slate-800"
                 />
+
+                <div className="flex flex-wrap gap-3 mt-4">
+                  {perfil.perfil_verificado && (
+                    <span className="bg-green-600 px-3 py-1 rounded-full text-sm">
+                      ✅ Perfil verificado
+                    </span>
+                  )}
+
+                  {perfil.empresa_verificada && (
+                    <span className="bg-blue-600 px-3 py-1 rounded-full text-sm">
+                      ✅ Empresa verificada
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -178,13 +196,6 @@ export default function Perfil() {
                 }
                 className="w-full p-4 rounded-xl bg-slate-800"
               />
-              <div className="flex gap-3 mt-3">
-  {perfil.perfil_verificado && (
-    <span className="bg-green-600 px-3 py-1 rounded-full text-sm">
-      ✅ Perfil verificado
-    </span>
-  )}
-</div>
 
               <input
                 placeholder="Correo"

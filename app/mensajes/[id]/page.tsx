@@ -15,21 +15,18 @@ export default function ChatPage({
   const [contenido, setContenido] = useState("");
 
   const cargarMensajes = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("mensajes")
       .select("*")
       .eq("conversacion_id", Number(id))
       .order("created_at", { ascending: true });
 
-    if (error) {
-      alert(JSON.stringify(error, null, 2));
-      return;
-    }
-
     setMensajes(data || []);
   };
 
   useEffect(() => {
+    let canal: any;
+
     const iniciar = async () => {
       const { data } = await supabase.auth.getUser();
 
@@ -40,10 +37,32 @@ export default function ChatPage({
 
       setUserId(data.user.id);
       await cargarMensajes();
+
+      canal = supabase
+        .channel(`chat-${id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "mensajes",
+            filter: `conversacion_id=eq.${id}`,
+          },
+          (payload) => {
+            setMensajes((prev) => [...prev, payload.new]);
+          }
+        )
+        .subscribe();
     };
 
     iniciar();
-  }, []);
+
+    return () => {
+      if (canal) {
+        supabase.removeChannel(canal);
+      }
+    };
+  }, [id]);
 
   const enviarMensaje = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,23 +82,15 @@ export default function ChatPage({
       .eq("id", Number(id))
       .single();
 
-    if (!conversacion) {
-      alert("No se encontró la conversación.");
-      return;
-    }
+    if (!conversacion) return;
 
-    const { error } = await supabase.from("mensajes").insert([
+    await supabase.from("mensajes").insert([
       {
         conversacion_id: Number(id),
         sender_id: userData.user.id,
         contenido,
       },
     ]);
-
-    if (error) {
-      alert(JSON.stringify(error, null, 2));
-      return;
-    }
 
     const receptorId =
       userData.user.id === conversacion.emprendedor_id
@@ -95,7 +106,6 @@ export default function ChatPage({
     ]);
 
     setContenido("");
-    await cargarMensajes();
   };
 
   return (

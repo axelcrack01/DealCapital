@@ -8,6 +8,7 @@ export default function Admin() {
   const [cargando, setCargando] = useState(true);
   const [proyectos, setProyectos] = useState<any[]>([]);
   const [interesados, setInteresados] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
 
   const cargarDatos = async () => {
     const { data: proyectosData } = await supabase
@@ -20,8 +21,14 @@ export default function Admin() {
       .select("*")
       .order("created_at", { ascending: false });
 
+    const { data: usuariosData } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
     setProyectos(proyectosData || []);
     setInteresados(interesadosData || []);
+    setUsuarios(usuariosData || []);
   };
 
   useEffect(() => {
@@ -55,9 +62,25 @@ export default function Admin() {
   const verificarProyecto = async (id: number, estadoActual: boolean) => {
     const { error } = await supabase
       .from("proyectos")
-      .update({
-        proyecto_verificado: !estadoActual,
-      })
+      .update({ proyecto_verificado: !estadoActual })
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    await cargarDatos();
+  };
+
+  const actualizarUsuario = async (
+    id: string,
+    campo: "perfil_verificado" | "empresa_verificada",
+    estadoActual: boolean
+  ) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ [campo]: !estadoActual })
       .eq("id", id);
 
     if (error) {
@@ -83,6 +106,73 @@ export default function Admin() {
       <h1 className="text-5xl font-bold mb-10">Panel Admin</h1>
 
       <section className="mb-14">
+        <h2 className="text-3xl font-bold mb-6">Usuarios</h2>
+
+        <div className="space-y-4">
+          {usuarios.map((u) => (
+            <div key={u.id} className="bg-slate-900 p-5 rounded-xl">
+              <h3 className="text-xl font-bold">
+                {u.nombre || "Sin nombre"}
+              </h3>
+
+              <p>Email: {u.email}</p>
+              <p>Tipo: {u.tipo_usuario || "No definido"}</p>
+
+              <p>
+                Perfil:{" "}
+                {u.perfil_verificado ? (
+                  <span className="text-green-400">✅ Verificado</span>
+                ) : (
+                  <span className="text-red-400">❌ Pendiente</span>
+                )}
+              </p>
+
+              <p>
+                Empresa:{" "}
+                {u.empresa_verificada ? (
+                  <span className="text-green-400">✅ Verificada</span>
+                ) : (
+                  <span className="text-red-400">❌ Pendiente</span>
+                )}
+              </p>
+
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() =>
+                    actualizarUsuario(
+                      u.id,
+                      "perfil_verificado",
+                      u.perfil_verificado
+                    )
+                  }
+                  className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold"
+                >
+                  {u.perfil_verificado
+                    ? "Quitar verificación perfil"
+                    : "Verificar perfil"}
+                </button>
+
+                <button
+                  onClick={() =>
+                    actualizarUsuario(
+                      u.id,
+                      "empresa_verificada",
+                      u.empresa_verificada
+                    )
+                  }
+                  className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold"
+                >
+                  {u.empresa_verificada
+                    ? "Quitar verificación empresa"
+                    : "Verificar empresa"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mb-14">
         <h2 className="text-3xl font-bold mb-6">Proyectos publicados</h2>
 
         <div className="space-y-4">
@@ -95,11 +185,11 @@ export default function Admin() {
               <p>Capital: S/ {p.capital_requerido}</p>
 
               <p className="mt-2">
-                Estado:
+                Estado:{" "}
                 {p.proyecto_verificado ? (
-                  <span className="text-green-400 ml-2">✅ Verificado</span>
+                  <span className="text-green-400">✅ Verificado</span>
                 ) : (
-                  <span className="text-red-400 ml-2">❌ Pendiente</span>
+                  <span className="text-red-400">❌ Pendiente</span>
                 )}
               </p>
 

@@ -159,6 +159,12 @@ export default async function DetalleProyecto({
               >
                 Estoy interesado
               </a>
+              <a
+  href={`/comprometer/${proyecto.id}`}
+  className="block text-center mt-4 border border-yellow-500 text-yellow-400 px-8 py-4 rounded-xl font-bold hover:bg-yellow-500 hover:text-black"
+>
+  Comprometer inversión
+</a>
             </div>
           </aside>
         </div>

@@ -7,6 +7,7 @@ export default function Navbar() {
   const [userName, setUserName] = useState<string | null>(null);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [notificaciones, setNotificaciones] = useState(0);
 
   useEffect(() => {
     const getUser = async () => {
@@ -24,6 +25,14 @@ export default function Navbar() {
 
         setUserName(profile?.nombre || nombre);
         setFotoUrl(profile?.foto_url || null);
+
+        const { count } = await supabase
+          .from("notificaciones")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", data.user.id)
+          .eq("leida", false);
+
+        setNotificaciones(count || 0);
       }
     };
 
@@ -34,6 +43,17 @@ export default function Navbar() {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
+
+  const NotiLink = () => (
+    <a href="/notificaciones" className="relative hover:text-yellow-400">
+      Notificaciones
+      {notificaciones > 0 && (
+        <span className="absolute -top-3 -right-4 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+          {notificaciones}
+        </span>
+      )}
+    </a>
+  );
 
   return (
     <nav className="sticky top-0 z-50 bg-[#020817]/95 border-b border-slate-800 backdrop-blur">
@@ -58,7 +78,7 @@ export default function Navbar() {
             <>
               <a href="/dashboard">Dashboard</a>
               <a href="/mensajes">Mensajes</a>
-              <a href="/notificaciones">Notificaciones</a>
+              <NotiLink />
 
               <a href="/perfil" className="flex items-center gap-3 border-l border-slate-700 pl-5">
                 {fotoUrl ? (
@@ -110,7 +130,16 @@ export default function Navbar() {
                 <hr className="border-slate-800" />
                 <a href="/dashboard">Dashboard</a>
                 <a href="/mensajes">Mensajes</a>
-                <a href="/notificaciones">Notificaciones</a>
+
+                <a href="/notificaciones" className="relative w-fit">
+                  Notificaciones
+                  {notificaciones > 0 && (
+                    <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                      {notificaciones}
+                    </span>
+                  )}
+                </a>
+
                 <a href="/analitica">Analítica</a>
                 <a href="/perfil">Mi perfil</a>
                 <button onClick={cerrarSesion} className="text-left text-red-400 font-bold">

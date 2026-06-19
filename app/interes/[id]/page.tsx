@@ -70,6 +70,7 @@ export default function InteresProyecto({
     alert(JSON.stringify(conversacionError, null, 2));
     return;
   }
+  
 
   if (form.mensaje.trim()) {
     const { error: mensajeError } = await supabase.from("mensajes").insert([
@@ -87,6 +88,13 @@ export default function InteresProyecto({
   }
 
   window.location.href = `/mensajes/${conversacion.id}`;
+  await supabase.from("notificaciones").insert([
+  {
+    user_id: proyecto.user_id,
+    tipo: "Nuevo interesado",
+    mensaje: `${form.nombre} está interesado en tu proyecto.`,
+  },
+]);
 };
 
   return (

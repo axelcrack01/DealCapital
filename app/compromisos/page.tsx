@@ -73,6 +73,27 @@ export default function Compromisos() {
         return;
       }
     }
+    const { data: compromisoData } = await supabase
+  .from("compromisos")
+  .select("inversionista_id")
+  .eq("id", compromisoId)
+  .single();
+
+if (compromisoData?.inversionista_id) {
+  await supabase.from("notificaciones").insert([
+    {
+      user_id: compromisoData.inversionista_id,
+      tipo:
+        estado === "aceptado"
+          ? "Compromiso aceptado"
+          : "Compromiso rechazado",
+      mensaje:
+        estado === "aceptado"
+          ? "Tu compromiso de inversión fue aceptado."
+          : "Tu compromiso de inversión fue rechazado.",
+    },
+  ]);
+}
 
     const { error } = await supabase
       .from("compromisos")

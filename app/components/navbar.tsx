@@ -105,6 +105,7 @@ export default function Navbar() {
         <div className="absolute right-4 top-[76px] w-72 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 z-50">
           <div className="flex flex-col gap-4 text-slate-200 font-medium">
             <a href="/dashboard" className="hover:text-yellow-400">Dashboard</a>
+            <a href="/inversiones" className="hover:text-yellow-400">Mis inversiones</a>
             <a href="/mensajes" className="hover:text-yellow-400">Mensajes</a>
             <a href="/notificaciones" className="hover:text-yellow-400">Notificaciones</a>
             <a href="/compromisos" className="hover:text-yellow-400">Compromisos</a>

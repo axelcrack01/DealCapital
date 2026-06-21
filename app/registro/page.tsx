@@ -1,59 +1,150 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
-export default function Registro() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function RegisterPage() {
+  const router = useRouter();
+
   const [nombre, setNombre] = useState("");
-  const [tipo, setTipo] = useState("");
+  const [email, setEmail] = useState("");
+  const [tipoUsuario, setTipoUsuario] = useState("inversionista");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
-  const registrar = async (e: React.FormEvent) => {
+  const registrarUsuario = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMensaje("");
+    setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email,
+    if (!nombre || !email || !password) {
+      setMensaje("Completa todos los campos.");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setMensaje("La contraseña debe tener mínimo 6 caracteres.");
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim().toLowerCase(),
       password,
       options: {
         data: {
           nombre,
-          tipo,
+          tipo_usuario: tipoUsuario,
         },
       },
     });
 
     if (error) {
-      setMensaje(error.message);
+      console.log("Error register:", error);
+
+      if (
+        error.message.toLowerCase().includes("already") ||
+        error.message.toLowerCase().includes("registered")
+      ) {
+        setMensaje("Este correo ya está registrado. Inicia sesión.");
+      } else {
+        setMensaje(error.message);
+      }
+
+      setLoading(false);
       return;
     }
 
-    setMensaje("Cuenta creada. Revisa tu correo para confirmar tu registro.");
+    if (data.user) {
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: data.user.id,
+        nombre,
+        email: email.trim().toLowerCase(),
+        tipo_usuario: tipoUsuario,
+      });
+
+      if (profileError) {
+        console.log("Error profile:", profileError);
+        setMensaje("Cuenta creada, pero hubo un problema guardando el perfil.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    setMensaje("Cuenta creada correctamente.");
+    setLoading(false);
+
+    setTimeout(() => {
+      router.push("/login");
+    }, 1200);
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-6">
-      <form onSubmit={registrar} className="bg-slate-900 p-10 rounded-2xl w-full max-w-md space-y-5">
-        <h1 className="text-4xl font-bold text-center">Crear Cuenta</h1>
+    <main className="min-h-screen bg-[#030712] flex items-center justify-center px-4">
+      <form
+        onSubmit={registrarUsuario}
+        className="w-full max-w-md bg-[#111827] p-10 rounded-2xl shadow-lg"
+      >
+        <h1 className="text-4xl font-bold text-white text-center mb-8">
+          Crear Cuenta
+        </h1>
 
-        <input className="w-full p-4 rounded-xl bg-slate-800" placeholder="Nombre completo" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+        <input
+          type="text"
+          placeholder="Nombre completo"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          className="w-full mb-5 px-4 py-4 rounded-xl bg-[#1f2937] text-white outline-none"
+        />
 
-        <input className="w-full p-4 rounded-xl bg-slate-800" type="email" placeholder="Correo electrónico" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input
+          type="email"
+          placeholder="Correo electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full mb-5 px-4 py-4 rounded-xl bg-[#1f2937] text-white outline-none"
+        />
 
-        <select className="w-full p-4 rounded-xl bg-slate-800" value={tipo} onChange={(e) => setTipo(e.target.value)} required>
-          <option value="">Tipo de cuenta</option>
-          <option value="emprendedor">Emprendedor</option>
+        <select
+          value={tipoUsuario}
+          onChange={(e) => setTipoUsuario(e.target.value)}
+          className="w-full mb-5 px-4 py-4 rounded-xl bg-[#1f2937] text-white outline-none"
+        >
           <option value="inversionista">Inversionista</option>
+          <option value="emprendedor">Emprendedor</option>
         </select>
 
-        <input className="w-full p-4 rounded-xl bg-slate-800" type="password" placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full mb-5 px-4 py-4 rounded-xl bg-[#1f2937] text-white outline-none"
+        />
 
-        <button className="w-full bg-yellow-500 text-black py-4 rounded-xl font-bold">
-          Crear Cuenta
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 rounded-xl transition"
+        >
+          {loading ? "Creando cuenta..." : "Crear Cuenta"}
         </button>
 
-        {mensaje && <p className="text-yellow-400 text-center">{mensaje}</p>}
+        {mensaje && (
+          <p className="text-center text-yellow-400 mt-5 font-semibold">
+            {mensaje}
+          </p>
+        )}
+
+        <p
+          onClick={() => router.push("/login")}
+          className="text-center text-yellow-400 mt-6 cursor-pointer hover:underline"
+        >
+          Ya tengo una cuenta
+        </p>
       </form>
     </main>
   );

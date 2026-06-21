@@ -196,6 +196,7 @@ export default async function DetalleProyecto({
               >
                 Comprometer inversión
               </a>
+              <FavoritoButton proyectoId={proyecto.id} />
             </div>
           </aside>
         </div>

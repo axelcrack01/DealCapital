@@ -10,15 +10,14 @@ export default async function Oportunidades() {
     .order("created_at", { ascending: false });
 
   if (error) {
+    console.error("No fue posible cargar oportunidades", { code: error.code, message: error.message });
     return (
       <main className="min-h-screen bg-slate-950 text-white p-10">
         <h1 className="text-4xl font-bold mb-4">
-          Error cargando oportunidades
+          No pudimos cargar las oportunidades
         </h1>
 
-        <pre className="text-red-400">
-          {JSON.stringify(error, null, 2)}
-        </pre>
+        <p className="text-slate-300">Ocurrió un problema al consultar los proyectos. Intenta actualizar la página más tarde.</p>
       </main>
     );
   }

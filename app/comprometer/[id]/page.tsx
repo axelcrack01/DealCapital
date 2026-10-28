@@ -17,6 +17,12 @@ export default function Comprometer({
   const enviarCompromiso = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const importe = Number(monto);
+    if (!Number.isFinite(importe) || importe <= 0) {
+      setEstado("Ingresa un monto de inversión válido y mayor que cero.");
+      return;
+    }
+
     const { data } = await supabase.auth.getUser();
 
     if (!data.user) {
@@ -28,14 +34,14 @@ export default function Comprometer({
       {
         proyecto_id: Number(id),
         inversionista_id: data.user.id,
-        monto: Number(monto),
+        monto: importe,
         mensaje,
       },
     ]);
 
     if (error) {
-      alert(JSON.stringify(error, null, 2));
-      setEstado("Error al registrar compromiso.");
+      console.error("No fue posible registrar el compromiso", { code: error.code, message: error.message });
+      setEstado("No pudimos registrar el compromiso. Intenta nuevamente.");
       return;
     }
 
@@ -52,6 +58,8 @@ export default function Comprometer({
         <form onSubmit={enviarCompromiso} className="bg-slate-900 p-8 rounded-2xl space-y-5">
           <input
             type="number"
+            min="0.01"
+            step="0.01"
             placeholder="Monto que deseas invertir"
             value={monto}
             onChange={(e) => setMonto(e.target.value)}

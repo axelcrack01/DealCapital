@@ -55,7 +55,6 @@ export default async function Home() {
 
           <div className="dc-stats">
             <Stat symbol="▣" value={totalProyectos} label="Proyectos publicados" />
-            <Stat symbol="∞" value="+" label="Inversionistas activos" />
             <Stat
               symbol="▤"
               value={`S/ ${capitalSolicitado.toLocaleString("es-PE")}`}

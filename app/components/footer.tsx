@@ -1,74 +1,27 @@
+import Link from "next/link";
+
 export default function Footer() {
   return (
-    <footer className="bg-slate-950 border-t border-slate-800 mt-20">
-      <div className="max-w-7xl mx-auto px-6 py-10">
-
-        <div className="grid md:grid-cols-3 gap-8">
-
-          {/* Marca */}
-          <div>
-            <h3 className="text-2xl font-bold text-white mb-3">
-              DealCapital
-            </h3>
-
-            <p className="text-slate-400">
-              Conectamos emprendedores con inversionistas para impulsar
-              proyectos con potencial de crecimiento.
-            </p>
-          </div>
-
-          {/* Enlaces */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-3">
-              Navegación
-            </h4>
-
-            <ul className="space-y-2 text-slate-400">
-              <li>
-                <a href="/">Inicio</a>
-              </li>
-
-              <li>
-                <a href="/oportunidades">Oportunidades</a>
-              </li>
-
-              <li>
-                <a href="/publicar">Publicar Proyecto</a>
-              </li>
-
-              <li>
-                <a href="/nosotros">Nosotros</a>
-              </li>
-
-              <li>
-                <a href="/contacto">Contacto</a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contacto */}
-          <div>
-            <h4 className="text-lg font-semibold text-white mb-3">
-              Contacto
-            </h4>
-
-            <ul className="space-y-2 text-slate-400">
-              <li>contacto@dealcapital.pe</li>
-              <li>Lima, Perú</li>
-              <li>
-                <a href="https://www.linkedin.com/company/dealcapital/?lipi=urn%3Ali%3Apage%3Ad_flagship3_search_srp_all%3B6yCEOgq0TbK34KPHvA%2F5rg%3D%3D">
-                  LinkedIn
-                </a>
-              </li>
-            </ul>
-          </div>
-
+    <footer className="border-t border-slate-800 bg-[#07111d] text-slate-300">
+      <div className="dc-container grid gap-12 py-14 md:grid-cols-[1.5fr_1fr_1fr]">
+        <div>
+          <Link href="/" className="mb-5 inline-flex items-center gap-3 text-xl font-bold text-white">
+            <span className="grid size-9 place-items-center rounded-lg bg-amber-300 text-lg text-slate-950">✦</span> Deal<span className="-ml-3 text-amber-200">Capital</span>
+          </Link>
+          <p className="max-w-sm text-sm leading-7 text-slate-400">Unimos emprendimiento y capital mediante conexiones más informadas. Plataforma en desarrollo, enfocada en transparencia y seguridad.</p>
         </div>
-
-        <div className="border-t border-slate-800 mt-8 pt-6 text-center text-slate-500">
-          © 2026 DealCapital. Todos los derechos reservados.
+        <div>
+          <h2 className="mb-5 text-sm font-bold text-white">Explorar</h2>
+          <div className="flex flex-col gap-3 text-sm"><Link href="/oportunidades" className="hover:text-amber-200">Oportunidades</Link><Link href="/publicar" className="hover:text-amber-200">Publicar proyecto</Link><Link href="/nosotros" className="hover:text-amber-200">Nosotros</Link><Link href="/contacto" className="hover:text-amber-200">Contacto</Link></div>
         </div>
-
+        <div>
+          <h2 className="mb-5 text-sm font-bold text-white">Confianza y soporte</h2>
+          <div className="flex flex-col gap-3 text-sm"><Link href="/verificacion" className="hover:text-amber-200">Verificación de identidad</Link><Link href="/contacto" className="hover:text-amber-200">Ayuda y consultas</Link><a href="https://www.linkedin.com/company/dealcapital/" rel="noopener noreferrer" target="_blank" className="hover:text-amber-200">LinkedIn</a><span className="text-slate-500">Lima, Perú</span></div>
+        </div>
+      </div>
+      <div className="dc-container flex flex-col justify-between gap-3 border-t border-slate-800 py-6 text-xs text-slate-500 sm:flex-row">
+        <span>© {new Date().getFullYear()} DealCapital. Todos los derechos reservados.</span>
+        <span>MVP · La información de las oportunidades es declarada por sus responsables.</span>
       </div>
     </footer>
   );

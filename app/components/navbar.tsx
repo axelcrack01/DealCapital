@@ -1,129 +1,90 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
+const publicLinks = [
+  { href: "/oportunidades", label: "Oportunidades" },
+  { href: "/nosotros", label: "Nosotros" },
+  { href: "/verificacion", label: "Confianza" },
+  { href: "/contacto", label: "Contacto" },
+];
+
 export default function Navbar() {
-  const [userName, setUserName] = useState<string | null>(null);
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const [name, setName] = useState<string | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const getUser = async () => {
+    let active = true;
+    const update = async () => {
       const { data } = await supabase.auth.getUser();
-
-      if (data.user) {
-        const nombre =
-          data.user.user_metadata?.nombre || data.user.email || "Usuario";
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("nombre, foto_url")
-          .eq("id", data.user.id)
-          .single();
-
-        setUserName(profile?.nombre || nombre);
-        setFotoUrl(profile?.foto_url || null);
-      }
+      if (!active) return;
+      setSignedIn(Boolean(data.user));
+      setName(data.user?.user_metadata?.nombre || data.user?.email?.split("@")[0] || null);
     };
-
-    getUser();
+    void update();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => { void update(); });
+    return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
 
-  const cerrarSesion = async () => {
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+
+  const logout = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.assign("/");
   };
 
+  const navLink = (href: string, label: string) => (
+    <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}
+      className={"text-sm font-medium transition-colors hover:text-amber-200 " + (pathname === href ? "text-amber-200" : "text-slate-300")}>{label}</Link>
+  );
+
   return (
-    <nav className="sticky top-0 z-50 bg-[#020817]/95 border-b border-slate-800 backdrop-blur">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="/" className="flex items-center gap-3 shrink-0">
-          <img
-            src="/logo.png"
-            alt="DealCapital"
-            className="w-11 h-11 bg-white p-1"
-          />
-          <span className="text-xl font-extrabold text-white">
-            Deal<span className="text-yellow-400">Capital</span>
-          </span>
-        </a>
+    <header className="sticky top-0 z-50 border-b border-slate-700/60 bg-[#07111d]/95 backdrop-blur-xl">
+      <div className="dc-container flex h-[74px] items-center justify-between gap-4">
+        <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="DealCapital, inicio">
+          <img src="/logo.png" alt="" width={38} height={38} className="size-[38px] rounded-lg bg-white object-contain p-1" />
+          <span className="text-lg font-extrabold tracking-tight text-white">Deal<span className="text-amber-200">Capital</span></span>
+        </Link>
 
-        <div className="hidden lg:flex items-center gap-7 text-slate-200 font-medium">
-          <a href="/" className="hover:text-yellow-400">Inicio</a>
-          <a href="/nosotros" className="hover:text-yellow-400">Nosotros</a>
-          <a href="/oportunidades" className="hover:text-yellow-400">Oportunidades</a>
-          <a href="/inversionistas" className="hover:text-yellow-400">Inversionistas</a>
-          <a href="/contacto" className="hover:text-yellow-400">Contacto</a>
+        <nav aria-label="Navegación principal" className="hidden items-center gap-7 lg:flex">
+          {publicLinks.map(({href,label}) => navLink(href,label))}
+        </nav>
+
+        <div className="hidden items-center gap-3 lg:flex">
+          {signedIn ? (
+            <>
+              <Link href="/dashboard" className="text-sm text-slate-300 hover:text-amber-200">Panel</Link>
+              <Link href="/perfil" className="dc-btn dc-btn-secondary max-w-[175px] truncate">{name || "Mi perfil"}</Link>
+              <button type="button" onClick={logout} className="text-sm text-slate-400 hover:text-red-300">Salir</button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="px-3 text-sm font-semibold text-slate-300 hover:text-amber-200">Iniciar sesión</Link>
+              <Link href="/registro" className="dc-btn dc-btn-primary">Crear cuenta <span aria-hidden="true">↗</span></Link>
+            </>
+          )}
         </div>
 
-        {!userName ? (
-          <div className="flex items-center gap-4">
-            <a href="/login" className="text-slate-300 hover:text-yellow-400">
-              Iniciar sesión
-            </a>
-
-            <a
-              href="/registro"
-              className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold hover:bg-yellow-400"
-            >
-              Registrarse
-            </a>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4">
-            <a href="/perfil" className="hidden sm:flex items-center gap-3">
-              {fotoUrl ? (
-                <img
-                  src={fotoUrl}
-                  alt="Perfil"
-                  className="w-10 h-10 rounded-full object-cover border-2 border-yellow-500"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-yellow-500 text-black flex items-center justify-center font-bold">
-                  {userName.charAt(0).toUpperCase()}
-                </div>
-              )}
-
-              <span className="text-white font-bold max-w-[150px] truncate">
-                {userName}
-              </span>
-            </a>
-
-            <button
-              onClick={() => setOpen(!open)}
-              className="text-white text-3xl"
-              aria-label="Abrir menú"
-            >
-              {open ? "×" : "☰"}
-            </button>
-          </div>
-        )}
+        <button type="button" aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuOpen}
+          aria-controls="mobile-nav" onClick={() => setMenuOpen(value => !value)}
+          className="grid size-11 place-items-center rounded-lg border border-slate-700 text-xl text-white lg:hidden">{menuOpen ? "×" : "☰"}</button>
       </div>
-
-      {userName && open && (
-        <div className="absolute right-4 top-[76px] w-72 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 z-50">
-          <div className="flex flex-col gap-4 text-slate-200 font-medium">
-            <a href="/dashboard" className="hover:text-yellow-400">Dashboard</a>
-            <a href="/inversiones" className="hover:text-yellow-400">Mis inversiones</a>
-            <a href="/mensajes" className="hover:text-yellow-400">Mensajes</a>
-            <a href="/notificaciones" className="hover:text-yellow-400">Notificaciones</a>
-            <a href="/compromisos" className="hover:text-yellow-400">Compromisos</a>
-            <a href="/favoritos" className="hover:text-yellow-400">Favoritos</a>
-            <a href="/analitica" className="hover:text-yellow-400">Analítica</a>
-            <a href="/perfil" className="hover:text-yellow-400">Mi perfil</a>
-
-            <hr className="border-slate-700" />
-
-            <button
-              onClick={cerrarSesion}
-              className="text-left text-red-400 font-bold"
-            >
-              Cerrar sesión
-            </button>
-          </div>
-        </div>
-      )}
-    </nav>
+      {menuOpen && <nav id="mobile-nav" aria-label="Navegación móvil" className="dc-container flex flex-col gap-5 border-t border-slate-700/70 py-6 lg:hidden">
+        {publicLinks.map(({href,label}) => navLink(href,label))}
+        {signedIn ? (
+          <>
+            {navLink("/dashboard","Mi panel")}{navLink("/perfil","Mi perfil")}
+            <button type="button" onClick={logout} className="text-left text-sm text-rose-300">Cerrar sesión</button>
+          </>
+        ) : (
+          <div className="flex flex-wrap gap-3"><Link href="/login" className="dc-btn dc-btn-secondary">Iniciar sesión</Link><Link href="/registro" className="dc-btn dc-btn-primary">Crear cuenta</Link></div>
+        )}
+      </nav>}
+    </header>
   );
 }

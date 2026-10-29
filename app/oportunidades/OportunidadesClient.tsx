@@ -1,223 +1,108 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 
-export default function OportunidadesClient({ proyectos }: { proyectos: any[] }) {
-  const [busqueda, setBusqueda] = useState("");
-  const [riesgo, setRiesgo] = useState("");
-  const [industria, setIndustria] = useState("");
-  const [orden, setOrden] = useState("recientes");
+export type Opportunity = {
+  id: number;
+  nombre_proyecto: string | null;
+  industria: string | null;
+  descripcion: string | null;
+  capital_requerido: number | null;
+  riesgo: string | null;
+  imagen_url: string | null;
+  proyecto_verificado: boolean | null;
+  created_at: string | null;
+};
 
-  const proyectosFiltrados = proyectos.filter((p) => {
-    const coincideBusqueda =
-      p.nombre_proyecto?.toLowerCase().includes(busqueda.toLowerCase()) ||
-      p.descripcion?.toLowerCase().includes(busqueda.toLowerCase());
+const amount = (n: number) => new Intl.NumberFormat("es-PE", {
+  style: "currency", currency: "PEN", maximumFractionDigits: 0,
+}).format(n);
 
-    const coincideRiesgo = riesgo ? p.riesgo === riesgo : true;
+export default function OportunidadesClient({ proyectos }: { proyectos: Opportunity[] }) {
+  const [query, setQuery] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [sort, setSort] = useState("recent");
+  const industries = useMemo(() => Array.from(new Set(
+    proyectos.map(p => p.industria).filter((i): i is string => Boolean(i))
+  )).sort(), [proyectos]);
 
-    const coincideIndustria = industria
-      ? p.industria?.toLowerCase().includes(industria.toLowerCase())
-      : true;
+  const results = useMemo(() => {
+    const search = query.trim().toLocaleLowerCase("es");
+    return proyectos.filter(p => (
+      (!search || [p.nombre_proyecto,p.descripcion,p.industria]
+        .filter(Boolean).join(" ").toLocaleLowerCase("es").includes(search)) &&
+      (!industry || p.industria === industry)
+    )).sort((a,b) => {
+      if (sort === "low") return Number(a.capital_requerido || 0) - Number(b.capital_requerido || 0);
+      if (sort === "high") return Number(b.capital_requerido || 0) - Number(a.capital_requerido || 0);
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
+  }, [proyectos, query, industry, sort]);
 
-    return coincideBusqueda && coincideRiesgo && coincideIndustria;
-  });
-
-  const proyectosOrdenados = [...proyectosFiltrados].sort((a, b) => {
-    if (orden === "mayorCapital") {
-      return Number(b.capital_requerido || 0) - Number(a.capital_requerido || 0);
-    }
-
-    if (orden === "menorCapital") {
-      return Number(a.capital_requerido || 0) - Number(b.capital_requerido || 0);
-    }
-
-    if (orden === "mayorProgreso") {
-      const progresoA =
-        Number(a.capital_requerido || 0) > 0
-          ? Number(a.monto_recaudado || 0) / Number(a.capital_requerido)
-          : 0;
-
-      const progresoB =
-        Number(b.capital_requerido || 0) > 0
-          ? Number(b.monto_recaudado || 0) / Number(b.capital_requerido)
-          : 0;
-
-      return progresoB - progresoA;
-    }
-
-    return 0;
-  });
+  const clear = () => { setQuery(""); setIndustry(""); setSort("recent"); };
 
   return (
     <>
-      <div className="bg-slate-900 p-6 rounded-2xl mb-10 grid md:grid-cols-4 gap-4">
-        <input
-          placeholder="Buscar proyecto..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          className="p-4 rounded-xl bg-slate-800"
-        />
-
-        <input
-          placeholder="Filtrar por industria..."
-          value={industria}
-          onChange={(e) => setIndustria(e.target.value)}
-          className="p-4 rounded-xl bg-slate-800"
-        />
-
-        <select
-          value={riesgo}
-          onChange={(e) => setRiesgo(e.target.value)}
-          className="p-4 rounded-xl bg-slate-800"
-        >
-          <option value="">Todos los riesgos</option>
-          <option value="Bajo">Riesgo bajo</option>
-          <option value="Medio">Riesgo medio</option>
-          <option value="Alto">Riesgo alto</option>
-        </select>
-
-        <select
-          value={orden}
-          onChange={(e) => setOrden(e.target.value)}
-          className="p-4 rounded-xl bg-slate-800"
-        >
-          <option value="recientes">Más recientes</option>
-          <option value="mayorCapital">Mayor capital</option>
-          <option value="menorCapital">Menor capital</option>
-          <option value="mayorProgreso">Mayor progreso</option>
-        </select>
+      <div className="dc-panel mb-7 grid gap-5 p-5 md:grid-cols-3 md:p-6">
+        <label className="text-sm text-slate-300">
+          <span className="mb-2 block font-semibold">Buscar proyectos</span>
+          <input type="search" className="dc-input" value={query}
+            onChange={e => setQuery(e.target.value)} placeholder="Nombre, descripción, sector..." />
+        </label>
+        <label className="text-sm text-slate-300">
+          <span className="mb-2 block font-semibold">Industria</span>
+          <select className="dc-input" value={industry} onChange={e=>setIndustry(e.target.value)}>
+            <option value="">Todas</option>
+            {industries.map(i => <option value={i} key={i}>{i}</option>)}
+          </select>
+        </label>
+        <label className="text-sm text-slate-300">
+          <span className="mb-2 block font-semibold">Ordenar por</span>
+          <select className="dc-input" value={sort} onChange={e=>setSort(e.target.value)}>
+            <option value="recent">Más recientes</option>
+            <option value="low">Menor capital solicitado</option>
+            <option value="high">Mayor capital solicitado</option>
+          </select>
+        </label>
       </div>
-
-      <div className="grid xl:grid-cols-3 md:grid-cols-2 gap-8">
-        {proyectosOrdenados.map((proyecto) => {
-          const progreso =
-            Number(proyecto.capital_requerido || 0) > 0
-              ? Math.min(
-                  (Number(proyecto.monto_recaudado || 0) /
-                    Number(proyecto.capital_requerido)) *
-                    100,
-                  100
-                )
-              : 0;
-
-          return (
-            <div
-              key={proyecto.id}
-              className="bg-slate-900 rounded-3xl overflow-hidden border border-slate-800 hover:border-yellow-500 transition-all hover:-translate-y-1"
-            >
-              {proyecto.imagen_url ? (
-                <img
-                  src={proyecto.imagen_url}
-                  alt={proyecto.nombre_proyecto}
-                  className="w-full h-56 object-cover"
-                />
-              ) : (
-                <div className="w-full h-56 bg-slate-800 flex items-center justify-center">
-                  <span className="text-slate-500">Sin imagen</span>
-                </div>
-              )}
-
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-5">
-                  {proyecto.logo_url ? (
-                    <img
-                      src={proyecto.logo_url}
-                      alt="Logo"
-                      className="w-16 h-16 rounded-2xl bg-white object-cover p-2"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center">
-                      🚀
-                    </div>
-                  )}
-
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      {proyecto.nombre_proyecto}
-                    </h2>
-
-                    <p className="text-yellow-400 text-sm">
-                      {proyecto.industria || "Proyecto"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {proyecto.proyecto_verificado && (
-                    <span className="bg-green-600 px-3 py-1 rounded-full text-xs">
-                      ✅ Verificado
-                    </span>
-                  )}
-
-                  {proyecto.riesgo && (
-                    <span className="bg-slate-800 px-3 py-1 rounded-full text-xs">
-                      Riesgo: {proyecto.riesgo}
-                    </span>
-                  )}
-
-                  {proyecto.roi_estimado && (
-                    <span className="bg-slate-800 px-3 py-1 rounded-full text-xs">
-                      ROI: {proyecto.roi_estimado}
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-slate-300 mb-6 line-clamp-3">
-                  {proyecto.descripcion}
-                </p>
-
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-slate-800 p-3 rounded-xl">
-                    <p className="text-slate-400 text-sm">Capital</p>
-                    <p className="font-bold">
-                      S/{" "}
-                      {Number(proyecto.capital_requerido || 0).toLocaleString(
-                        "es-PE"
-                      )}
-                    </p>
-                  </div>
-
-                  <div className="bg-slate-800 p-3 rounded-xl">
-                    <p className="text-slate-400 text-sm">Recaudado</p>
-                    <p className="font-bold">
-                      S/{" "}
-                      {Number(proyecto.monto_recaudado || 0).toLocaleString(
-                        "es-PE"
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <div className="flex justify-between text-sm text-slate-400 mb-2">
-                    <span>Financiamiento</span>
-                    <span>{Math.round(progreso)}%</span>
-                  </div>
-
-                  <div className="w-full bg-slate-800 rounded-full h-3">
-                    <div
-                      className="bg-yellow-500 h-3 rounded-full"
-                      style={{ width: `${progreso}%` }}
-                    />
-                  </div>
-                </div>
-
-                <a
-                  href={`/oportunidades/${proyecto.id}`}
-                  className="block text-center w-full bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-xl font-bold transition"
-                >
-                  Ver oportunidad
-                </a>
+      <div className="mb-7 flex items-center justify-between gap-3">
+        <p aria-live="polite" className="text-sm text-slate-400"><strong className="text-white">{results.length}</strong> oportunidades</p>
+        {(query || industry || sort !== "recent") && <button type="button" onClick={clear}
+          className="text-sm font-semibold text-amber-200 underline">Limpiar filtros</button>}
+      </div>
+      {results.length ? (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {results.map(p => (
+            <article key={p.id} className="dc-panel group flex flex-col overflow-hidden transition-colors hover:border-amber-200/50">
+              <div className="dc-sheen relative h-44 overflow-hidden border-b border-slate-700">
+                {p.imagen_url
+                  ? <img src={p.imagen_url} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />
+                  : <div className="grid size-full place-items-center text-6xl text-amber-200/40">✧</div>}
+                <span className="absolute left-4 top-4 rounded-lg bg-[#091827]/90 px-3 py-1.5 text-xs font-semibold text-amber-200">
+                  {p.industria || "Emprendimiento"}
+                </span>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {proyectosOrdenados.length === 0 && (
-        <p className="text-slate-400 mt-10">
-          No se encontraron oportunidades con esos filtros.
-        </p>
+              <div className="flex flex-1 flex-col p-6">
+                <h2 className="mb-3 text-xl font-bold text-white">{p.nombre_proyecto || "Proyecto"}</h2>
+                <p className="mb-6 line-clamp-3 flex-1 text-sm leading-7 text-slate-400">{p.descripcion || "Sin descripción disponible."}</p>
+                <div className="mb-5 grid grid-cols-2 gap-3 rounded-xl bg-[#0a1726] p-4">
+                  <div><p className="mb-1 text-xs text-slate-400">Capital solicitado</p><p className="text-sm font-bold text-white">{amount(Number(p.capital_requerido || 0))}</p></div>
+                  <div><p className="mb-1 text-xs text-slate-400">Riesgo declarado</p><p className="text-sm font-bold text-white">{p.riesgo || "No informado"}</p></div>
+                </div>
+                <p className="mb-5 text-xs leading-5 text-slate-500">Revisión de publicación. No es una certificación crediticia.</p>
+                <Link href={"/oportunidades/" + p.id} className="dc-btn dc-btn-secondary w-full">Ver oportunidad <span aria-hidden="true">↗</span></Link>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="dc-panel p-9">
+          <h2 className="mb-3 text-xl font-bold text-white">{proyectos.length ? "No hay coincidencias" : "Aún no hay proyectos publicados tras revisión"}</h2>
+          <p className="mb-6 text-sm leading-7 text-slate-400">{proyectos.length ? "Prueba con otra búsqueda." : "Puedes presentar tu idea y solicitar su revisión en DealCapital."}</p>
+          {proyectos.length ? <button type="button" onClick={clear} className="dc-btn dc-btn-secondary">Limpiar filtros</button>
+            : <Link href="/publicar" className="dc-btn dc-btn-primary">Presentar proyecto</Link>}
+        </div>
       )}
     </>
   );

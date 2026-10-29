@@ -21,7 +21,7 @@ GRANT UPDATE (nombre,email,tipo_usuario,biografia,telefono,ciudad,foto_url,
 
 REVOKE INSERT, UPDATE ON public.proyectos FROM anon, authenticated;
 GRANT INSERT (nombre_proyecto,emprendedor,email,capital_requerido,descripcion,retorno_ofrecido,
- estado,industria,plazo,ubicacion,pagina_web,user_id,riesgo,roi_estimado,video_pitch,
+ industria,plazo,ubicacion,pagina_web,user_id,riesgo,roi_estimado,video_pitch,
  proyecciones,riesgos,equipo_fundador,documentos_url,documento_pdf,logo_url,imagen_url,
  pitch_deck_url) ON public.proyectos TO authenticated;
 GRANT UPDATE (nombre_proyecto,emprendedor,email,capital_requerido,descripcion,retorno_ofrecido,

@@ -25,8 +25,8 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setMensaje("La contraseña debe tener mínimo 6 caracteres.");
+    if (password.length < 10) {
+      setMensaje("La contraseña debe tener al menos 10 caracteres.");
       setLoading(false);
       return;
     }
@@ -88,9 +88,14 @@ export default function RegisterPage() {
         onSubmit={registrarUsuario}
         className="w-full max-w-md bg-[#111827] p-10 rounded-2xl shadow-lg"
       >
-        <h1 className="text-4xl font-bold text-white text-center mb-8">
+        <h1 className="text-4xl font-bold text-white text-center mb-4">
           Crear Cuenta
         </h1>
+        <p className="text-center text-slate-300 mb-8 text-sm">
+          El registro crea una cuenta provisional. La verificación oficial de identidad
+          se realizará por separado cuando exista una integración autorizada.
+          Por ahora, no compartas tu DNI ni documentos personales.
+        </p>
 
         <input
           type="text"
@@ -119,7 +124,9 @@ export default function RegisterPage() {
 
         <input
           type="password"
-          placeholder="Contraseña"
+          minLength={10}
+          autoComplete="new-password"
+          placeholder="Contraseña (mínimo 10 caracteres)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full mb-5 px-4 py-4 rounded-xl bg-[#1f2937] text-white outline-none"
@@ -138,6 +145,10 @@ export default function RegisterPage() {
             {mensaje}
           </p>
         )}
+
+        <a href="/verificacion" className="block text-center text-slate-300 text-sm mt-5 hover:underline">
+          ¿Cómo funcionará la verificación de identidad?
+        </a>
 
         <p
           onClick={() => router.push("/login")}

@@ -8,11 +8,15 @@ export default async function DetalleProyecto({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!/^\d+$/.test(id)) {
+    return <main className="dc-container py-20 text-white"><h1 className="text-3xl font-bold">Proyecto no encontrado</h1></main>;
+  }
 
   const { data: proyecto } = await supabase
     .from("proyectos")
     .select("*")
     .eq("id", id)
+    .eq("proyecto_verificado", true)
     .single();
 
   if (!proyecto) {
@@ -74,13 +78,13 @@ export default async function DetalleProyecto({
               <div className="flex flex-wrap gap-3 mb-6">
                 {proyecto.proyecto_verificado && (
                   <span className="bg-green-600 px-4 py-2 rounded-full">
-                    ✅ Proyecto revisado
+                    Proyecto revisado para publicación
                   </span>
                 )}
 
                 {proyecto.riesgo && (
                   <span className="bg-slate-800 px-4 py-2 rounded-full">
-                    Riesgo: {proyecto.riesgo}
+                    Riesgo declarado: {proyecto.riesgo}
                   </span>
                 )}
 
@@ -180,7 +184,7 @@ export default async function DetalleProyecto({
                   value={proyecto.riesgo || "No especificado"}
                 />
 
-                <Metric label="Contacto" value={proyecto.email} />
+                <p className="text-xs leading-6 text-slate-400">Los datos de contacto se comparten mediante el flujo de interés. Una revisión de publicación no acredita la identidad civil ni la solvencia de una persona.</p>
               </div>
 
               <a
@@ -221,6 +225,7 @@ function FileButton({ href, label }: any) {
     <a
       href={href}
       target="_blank"
+      rel="noopener noreferrer"
       className="bg-slate-800 hover:bg-yellow-500 hover:text-black px-5 py-3 rounded-xl font-bold text-yellow-400"
     >
       {label}

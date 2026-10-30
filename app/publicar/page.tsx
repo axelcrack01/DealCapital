@@ -68,7 +68,8 @@ export default function PublicarProyecto() {
       return;
     }
 
-    const fileName = `${data.user.id}-${Date.now()}-${file.name}`;
+    const safeName = file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]/g, "_").slice(-100);
+    const fileName = `${data.user.id}-${Date.now()}-${safeName}`;
 
     const { error } = await supabase.storage
       .from(bucket)
@@ -98,21 +99,40 @@ export default function PublicarProyecto() {
       return;
     }
 
-    const { error } = await supabase.from("proyectos").insert([
-      {
-        ...form,
-        user_id: data.user.id,
-        capital_requerido: Number(form.capital_requerido),
-      },
-    ]);
-
-    if (error) {
-      alert(JSON.stringify(error, null, 2));
-      setMensaje("Error al publicar el proyecto.");
+    const capital = Number(form.capital_requerido);
+    if (!Number.isFinite(capital) || capital <= 0 || form.descripcion.trim().length < 30) {
+      setMensaje("Ingresa un capital válido y una descripción de al menos 30 caracteres.");
       return;
     }
 
-    setMensaje("Proyecto publicado correctamente.");
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      setMensaje("Tu sesión ha expirado. Inicia sesión nuevamente.");
+      return;
+    }
+
+    let response: Response;
+    try {
+      response = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        body: JSON.stringify(form),
+      });
+    } catch {
+      setMensaje("No pudimos conectar con el servidor. Intenta nuevamente.");
+      return;
+    }
+    const result = await response.json();
+    if (!response.ok) {
+      setMensaje(result.error || "No pudimos guardar el proyecto.");
+      return;
+    }
+
+    setMensaje("Proyecto recibido para revisión. Será visible después de su aprobación.");
   };
 
   return (
@@ -121,7 +141,7 @@ export default function PublicarProyecto() {
         <h1 className="text-5xl font-bold mb-4">Publicar Proyecto</h1>
 
         <p className="text-slate-300 mb-10">
-          Presenta tu proyecto de forma clara para atraer inversionistas.
+          Presenta tu proyecto. Será revisado antes de aparecer públicamente; no se certifica rentabilidad ni identidad por este envío.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -134,7 +154,7 @@ export default function PublicarProyecto() {
 
             <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="Correo de contacto" className="w-full p-4 rounded-xl bg-slate-800" required />
 
-            <textarea name="descripcion" value={form.descripcion} onChange={handleChange} placeholder="Describe tu proyecto" rows={6} className="w-full p-4 rounded-xl bg-slate-800" required />
+            <textarea name="descripcion" minLength={30} value={form.descripcion} onChange={handleChange} placeholder="Describe tu proyecto" rows={6} className="w-full p-4 rounded-xl bg-slate-800" required />
 
             <input name="equipo_fundador" value={form.equipo_fundador} onChange={handleChange} placeholder="Equipo fundador" className="w-full p-4 rounded-xl bg-slate-800" />
           </div>
@@ -142,7 +162,7 @@ export default function PublicarProyecto() {
           <div className="bg-slate-900 p-8 rounded-2xl space-y-5">
             <h2 className="text-2xl font-bold">Datos de inversión</h2>
 
-            <input name="capital_requerido" type="number" value={form.capital_requerido} onChange={handleChange} placeholder="Monto solicitado" className="w-full p-4 rounded-xl bg-slate-800" required />
+            <input name="capital_requerido" type="number" min="1" step="0.01" value={form.capital_requerido} onChange={handleChange} placeholder="Monto solicitado" className="w-full p-4 rounded-xl bg-slate-800" required />
 
             <input name="retorno_ofrecido" value={form.retorno_ofrecido} onChange={handleChange} placeholder="Retorno ofrecido, ejemplo: 15% en 6 meses" className="w-full p-4 rounded-xl bg-slate-800" />
 
@@ -218,8 +238,8 @@ export default function PublicarProyecto() {
             {form.documento_pdf && <a href={form.documento_pdf} target="_blank" className="block text-yellow-400 underline">Ver documento subido</a>}
           </div>
 
-          <button className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-xl font-bold transition">
-            Publicar Proyecto
+          <button type="submit" className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-xl font-bold transition">
+            Enviar proyecto a revisión
           </button>
         </form>
 

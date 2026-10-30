@@ -112,14 +112,35 @@ export default function Perfil() {
   const guardarPerfil = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!userId) {
+      setMensaje("Tu sesión no está lista. Vuelve a iniciar sesión.");
+      return;
+    }
+
+    // Only self-editable fields may be submitted. Never send verification
+    // badges, role, trusted identity data or any server-managed columns.
     const payload = {
       id: userId,
-      ...perfil,
+      nombre: perfil.nombre,
+      email: perfil.email,
+      tipo_usuario: perfil.tipo_usuario,
+      telefono: perfil.telefono,
+      pais: perfil.pais,
+      ciudad: perfil.ciudad,
+      biografia: perfil.biografia,
+      foto_url: perfil.foto_url,
+      empresa: perfil.empresa,
+      cargo: perfil.cargo,
+      linkedin: perfil.linkedin,
+      pagina_web: perfil.pagina_web,
+      experiencia: perfil.experiencia,
       capital_disponible: perfil.capital_disponible
         ? Number(perfil.capital_disponible)
         : null,
       monto_minimo: perfil.monto_minimo ? Number(perfil.monto_minimo) : null,
       monto_maximo: perfil.monto_maximo ? Number(perfil.monto_maximo) : null,
+      sectores_interes: perfil.sectores_interes,
+      tipo_inversionista: perfil.tipo_inversionista,
     };
 
     const { error } = await supabase.from("profiles").upsert(payload);
@@ -141,6 +162,18 @@ export default function Perfil() {
         <p className="text-slate-300 mb-10">
           Completa tu información para generar mayor confianza dentro de DealCapital.
         </p>
+
+        <div className="mb-8 rounded-2xl border border-slate-700 bg-slate-900 p-6">
+          <h2 className="text-xl font-bold text-white mb-2">Verificación de identidad</h2>
+          <p className="text-slate-300 mb-3">
+            La validación oficial de DNI con RENIEC y las consultas financieras autorizadas
+            todavía no están habilitadas. Tu información de perfil es declarada
+            y no constituye una verificación oficial de identidad.
+          </p>
+          <a href="/verificacion" className="text-yellow-400 font-semibold underline">
+            Conoce el proceso de verificación de DealCapital
+          </a>
+        </div>
 
         <form onSubmit={guardarPerfil} className="space-y-8">
           <div className="bg-slate-900 p-8 rounded-2xl">
@@ -174,13 +207,13 @@ export default function Perfil() {
                 <div className="flex flex-wrap gap-3 mt-4">
                   {perfil.perfil_verificado && (
                     <span className="bg-green-600 px-3 py-1 rounded-full text-sm">
-                      ✅ Perfil verificado
+                      Perfil revisado por DealCapital
                     </span>
                   )}
 
                   {perfil.empresa_verificada && (
                     <span className="bg-blue-600 px-3 py-1 rounded-full text-sm">
-                      ✅ Empresa verificada
+                      Empresa revisada por DealCapital
                     </span>
                   )}
                 </div>

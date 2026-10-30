@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BrandIcon from "../components/BrandIcon";
+import EditorialPhoto from "../components/EditorialPhoto";
 
 export const metadata = {
   title: "Contacto",
@@ -74,6 +75,7 @@ export default function Contacto() {
             </form>
           </div>
           <aside className="space-y-5">
+            <EditorialPhoto name="notebook" className="dc-contact-photo" sizes="(max-width: 740px) 92vw, 35vw" />
             <div className="dc-contact-card">
               <span className="dc-editorial-icon mb-6"><BrandIcon name="message" size={32}/></span>
               <h3 className="mb-3 text-xl font-bold">Mantengamos el contacto.</h3>

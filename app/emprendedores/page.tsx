@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BrandIcon from "../components/BrandIcon";
+import EditorialPhoto from "../components/EditorialPhoto";
 
 export const metadata = {
   title: "Para emprendedores",
@@ -28,11 +29,7 @@ export default function EmprendedoresPage() {
               <Link href="/contacto" className="dc-btn dc-btn-outline">Resolver una consulta <BrandIcon name="message" size={18}/></Link>
             </div>
           </div>
-          <aside className="dc-insight-rail">
-            <span>DealCapital para emprendedores</span>
-            <strong>La confianza también comienza por cómo cuentas tu historia.</strong>
-            <p className="text-sm leading-7 text-[#cbd5e1]">Información ordenada, objetivos claros y conversaciones con contexto.</p>
-          </aside>
+          <EditorialPhoto name="entrepreneur" className="dc-side-photo" sizes="(max-width: 740px) 92vw, 38vw" priority/>
         </div>
       </section>
 

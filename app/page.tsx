@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
+import BrandIcon, { type BrandIconName } from "./components/BrandIcon";
+import AudienceSwitcher from "./components/AudienceSwitcher";
+import DealNetwork from "./components/DealNetwork";
 
 export const dynamic = "force-dynamic";
 
@@ -10,179 +13,165 @@ type FeaturedProject = {
   descripcion: string | null;
   capital_requerido: number | null;
 };
-
-const money = (amount: number) => new Intl.NumberFormat("es-PE", {
+const formatMoney = (amount: number) => new Intl.NumberFormat("es-PE", {
   style: "currency", currency: "PEN", maximumFractionDigits: 0,
 }).format(amount);
 
-const benefits = [
-  { number: "01", title: "Publica tu proyecto", description: "Organiza tu propuesta de negocio y presenta cuánto capital necesitas.", href: "/publicar", link: "Presentar proyecto" },
-  { number: "02", title: "Explora oportunidades", description: "Descubre negocios y consulta información sobre sus objetivos y condiciones.", href: "/oportunidades", link: "Explorar proyectos" },
-  { number: "03", title: "Conecta directamente", description: "Expresa interés y empieza conversaciones con los responsables de cada iniciativa.", href: "/registro", link: "Crear una cuenta" },
-  { number: "04", title: "Conoce los riesgos", description: "Compara información declarada y revisa los documentos disponibles antes de decidir.", href: "/verificacion", link: "Nuestro enfoque" },
+const benefits: {number:string; icon:BrandIconName;title:string;description:string;href:string;cta:string}[] = [
+  {number:"01",icon:"venture",title:"Tu proyecto, mejor presentado.",description:"Cuenta qué estás construyendo y qué recursos necesitas para dar el siguiente paso.",href:"/emprendedores",cta:"Para emprendedores"},
+  {number:"02",icon:"compass",title:"Descubre con intención.",description:"Busca proyectos por sector, explora sus objetivos y examina información declarada.",href:"/oportunidades",cta:"Explorar oportunidades"},
+  {number:"03",icon:"link",title:"Conexiones que avanzan.",description:"Empieza conversaciones con personas interesadas y conoce otras perspectivas.",href:"/registro",cta:"Únete al ecosistema"},
+  {number:"04",icon:"document",title:"Información que importa.",description:"Identifica los datos disponibles y los que todavía necesitas comprobar.",href:"/verificacion",cta:"Conoce el proceso"}
 ];
 
 export default async function Home() {
   const { data, error } = await supabase.from("proyectos")
-    .select("id, nombre_proyecto, industria, descripcion, capital_requerido")
+    .select("id,nombre_proyecto,industria,descripcion,capital_requerido")
     .eq("proyecto_verificado", true)
-    .order("created_at", { ascending: false })
+    .order("created_at",{ascending:false})
     .limit(3);
 
-  const featured = (data ?? []) as FeaturedProject[];
+  const projects = (data ?? []) as FeaturedProject[];
 
   return (
-    <main className="dc-home">
-      <section className="dc-hero">
-        <div className="dc-container dc-hero-grid">
-          <div className="min-w-0">
-            <p className="dc-badge"><span aria-hidden="true" className="size-1.5 rounded-full bg-[#facc15]" /> Plataforma en fase MVP</p>
-            <h1 className="dc-title">
-              Conectamos emprendedores e <span>inversionistas.</span>
-            </h1>
-            <p className="dc-subtitle">
-              DealCapital conecta emprendedores que buscan financiamiento con
-              personas interesadas en descubrir nuevas oportunidades de negocio.
-              Presenta tu idea, conoce proyectos y construye conexiones con más información.
+    <main className="dc-landing">
+      <section className="dc-landing-top">
+        <div className="dc-container dc-landing-hero">
+          <div className="dc-landing-hero-copy">
+            <p className="dc-kicker">DealCapital / Emprendimiento e inversión</p>
+            <h1>Conectamos emprendedores con <em>inversionistas.</em></h1>
+            <p>
+              Una plataforma para dar visibilidad a las buenas ideas y conectar
+              con personas que buscan oportunidades. Presenta tu proyecto,
+              explora negocios y empieza conversaciones con más contexto.
             </p>
-            <div className="dc-actions">
+            <div className="dc-landing-actions">
               <Link href="/oportunidades" className="dc-btn dc-btn-primary">
-                Explorar oportunidades <span aria-hidden="true">↗</span>
+                Explorar oportunidades <BrandIcon name="arrow" size={18}/>
               </Link>
-              <Link href="/publicar" className="dc-btn dc-btn-outline">
-                Publicar mi proyecto <span aria-hidden="true">→</span>
+              <Link href="/emprendedores" className="dc-btn dc-btn-outline">
+                Tengo un proyecto <BrandIcon name="venture" size={19}/>
               </Link>
             </div>
-            <p className="mt-7 max-w-xl text-xs leading-6 text-slate-400">
-              Un espacio de conexión en desarrollo. DealCapital no recibe fondos
-              ni garantiza resultados de inversión.
+            <p className="dc-landing-disclaimer">
+              Plataforma en fase MVP. No recibimos fondos ni garantizamos resultados de inversión.
+              Las verificaciones oficiales aún no están habilitadas.
             </p>
           </div>
-
-          <aside className="dc-preview" aria-label="Resumen de cómo funciona DealCapital">
-            <div className="dc-preview-header">
-              <div className="flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-lg border border-[#facc15]/40 text-base font-extrabold text-[#facc15]">DC</span>
-                <div>
-                  <p className="text-base font-bold text-white">Tu próximo paso</p>
-                  <p className="text-xs text-slate-400">Así funciona DealCapital</p>
-                </div>
-              </div>
-              <span className="rounded-md border border-[#facc15]/30 bg-[#facc15]/10 px-2.5 py-1 text-[10px] font-semibold text-[#facc15]">FASE MVP</span>
-            </div>
-            <h2 className="mb-2 text-2xl font-bold leading-snug text-white">Del proyecto a la conexión.</h2>
-            <p className="mb-5 text-sm leading-7 text-[#cbd5e1]">
-              Un recorrido sencillo para conocer la información relevante antes de conversar.
-            </p>
-            <div>
-              {[
-                ["01", "Descubre una oportunidad", "Revisa el negocio, su sector y el capital solicitado."],
-                ["02", "Analiza su propuesta", "Consulta objetivos, documentación y riesgos declarados."],
-                ["03", "Inicia una conversación", "Contacta con el responsable a través de la plataforma."],
-              ].map(([n, title, description]) => (
-                <div className="dc-preview-step" key={n}>
-                  <span className="dc-preview-index">{n}</span>
-                  <div><h3>{title}</h3><p>{description}</p></div>
-                </div>
-              ))}
-            </div>
-            <Link href="/verificacion" className="mt-5 inline-flex text-xs font-bold text-[#facc15] hover:underline">
-              Conoce nuestro enfoque de seguridad <span aria-hidden="true" className="ml-2">↗</span>
-            </Link>
-          </aside>
+          <DealNetwork/>
         </div>
       </section>
 
-      <section className="dc-container py-16 sm:py-20" aria-labelledby="benefits-heading">
-        <div className="mb-9 grid gap-5 md:grid-cols-[1.1fr_.9fr] md:items-end">
+      <section className="dc-container dc-landing-section" aria-labelledby="dc-value-title">
+        <div className="dc-editorial-intro">
           <div>
-            <p className="dc-eyebrow mb-4">Nuestro ecosistema</p>
-            <h2 id="benefits-heading" className="max-w-xl text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
-              Una plataforma para conectar ideas y capital.
-            </h2>
+            <p className="dc-eyebrow mb-5">Lo que puedes hacer</p>
+            <h2 id="dc-value-title" className="dc-section-title">No se trata solo de encontrar capital. Se trata de <span className="text-[#facc15]">crear conexiones.</span></h2>
           </div>
-          <p className="max-w-md text-sm leading-7 text-[#cbd5e1]">
-            Emprendedores e inversionistas necesitan información clara, un proceso simple
-            y canales de contacto sin complicaciones.
+          <p className="dc-section-copy">
+            Cada interacción comienza con una historia de negocio. DealCapital organiza
+            ese primer encuentro en un entorno donde emprendedores e interesados
+            encuentran un punto de partida.
           </p>
         </div>
-        <div className="dc-features">
-          {benefits.map((item) => (
-            <article key={item.number} className="dc-feature-card flex flex-col">
-              <div className="dc-feature-icon" aria-hidden="true">{item.number}</div>
-              <h3>{item.title}</h3>
-              <p className="mb-5 flex-1">{item.description}</p>
-              <Link href={item.href} className="text-xs font-bold text-[#facc15] hover:underline">
-                {item.link} <span aria-hidden="true">↗</span>
-              </Link>
+        <div className="dc-editorial-bento">
+          {benefits.map((b,index) => (
+            <article key={b.number} className={"dc-editorial-tile "+(index<2?"is-large":"is-wide")}>
+              <div className="dc-editorial-tile-top">
+                <span className="dc-editorial-icon"><BrandIcon name={b.icon} size={32}/></span>
+                <span className="dc-editorial-count">{b.number} / 04</span>
+              </div>
+              <div className="dc-editorial-tile-body">
+                <h3>{b.title}</h3>
+                <p>{b.description}</p>
+                <Link href={b.href}>{b.cta}<BrandIcon name="arrow" size={17}/></Link>
+              </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="border-y border-slate-800 bg-[#061226] py-16 sm:py-20">
-        <div className="dc-container">
-          <div className="mb-9 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-            <div>
-              <p className="dc-eyebrow mb-4">Oportunidades</p>
-              <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-                Conoce los proyectos publicados.
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#cbd5e1]">
-                Cada proyecto presenta información suministrada por su responsable.
-                Una revisión de publicación no es una garantía de inversión.
-              </p>
-            </div>
-            <Link href="/oportunidades" className="dc-btn dc-btn-outline shrink-0">Ver todas las oportunidades ↗</Link>
-          </div>
-          {error ? (
-            <div role="status" className="dc-panel p-7 text-sm text-[#cbd5e1]">
-              No podemos mostrar las oportunidades en este momento. Intenta nuevamente más tarde.
-            </div>
-          ) : featured.length ? (
-            <div className="grid gap-5 md:grid-cols-3">
-              {featured.map((project) => (
-                <Link href={"/oportunidades/" + project.id} key={project.id}
-                  className="dc-panel group flex min-h-56 flex-col p-6 transition-colors hover:border-[#facc15]/50">
-                  <p className="mb-6 text-xs font-bold uppercase tracking-wider text-[#facc15]">
-                    {project.industria || "Emprendimiento"}
-                  </p>
-                  <h3 className="mb-3 text-lg font-bold text-white">{project.nombre_proyecto || "Proyecto"}</h3>
-                  <p className="mb-6 line-clamp-3 flex-1 text-sm leading-6 text-[#cbd5e1]">
-                    {project.descripcion || "Información no disponible."}
-                  </p>
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-700 pt-4">
-                    <span className="text-xs text-slate-400">Capital solicitado</span>
-                    <span className="text-sm font-bold text-[#facc15]">{money(Number(project.capital_requerido || 0))}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="dc-panel flex flex-col justify-between gap-5 p-7 sm:flex-row sm:items-center">
-              <div>
-                <h3 className="text-lg font-bold text-white">Pronto encontrarás oportunidades aquí.</h3>
-                <p className="mt-2 text-sm text-[#cbd5e1]">Por ahora no hay proyectos aprobados para publicación.</p>
-              </div>
-              <Link href="/publicar" className="dc-btn dc-btn-primary shrink-0">Presentar un proyecto ↗</Link>
-            </div>
-          )}
-        </div>
-      </section>
+      <AudienceSwitcher/>
 
-      <section className="dc-container py-16 sm:py-20">
-        <div className="dc-trust-card grid items-center gap-8 p-7 sm:p-10 lg:grid-cols-[1fr_auto]">
+      <section className="dc-container dc-market-section" aria-labelledby="dc-market-title">
+        <div className="dc-market-head">
           <div>
-            <p className="dc-eyebrow mb-4">Confianza y transparencia</p>
-            <h2 className="mb-4 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Más información para tomar mejores decisiones.
-            </h2>
-            <p className="max-w-3xl text-sm leading-7 text-[#cbd5e1]">
-              Estamos diseñando controles de identidad y revisión documental.
-              Las integraciones oficiales de RENIEC y SBS aún no están disponibles en DealCapital.
+            <p className="dc-eyebrow mb-5">Explora el ecosistema</p>
+            <h2 className="dc-section-title" id="dc-market-title">Oportunidades que merecen una mirada.</h2>
+            <p className="dc-section-copy mt-4 max-w-2xl">
+              Proyectos revisados para publicación. Las cifras son declaradas por
+              sus responsables y no representan una certificación financiera.
             </p>
           </div>
-          <Link href="/verificacion" className="dc-btn dc-btn-primary">Cómo verificaremos identidades ↗</Link>
+          <Link href="/oportunidades" className="dc-btn dc-btn-outline">Ver catálogo completo <BrandIcon name="arrow" size={18}/></Link>
+        </div>
+        {error ? (
+          <div role="status" className="dc-panel p-7 text-sm text-[#cbd5e1]">
+            Las oportunidades no están disponibles en este momento. Vuelve a intentarlo más tarde.
+          </div>
+        ) : projects.length ? (
+          <div className="grid gap-4 md:grid-cols-3">
+            {projects.map(p => (
+              <Link key={p.id} href={"/oportunidades/"+p.id} className="dc-market-card group">
+                <span className="dc-editorial-icon"><BrandIcon name="venture" size={27}/></span>
+                <h3>{p.nombre_proyecto || "Proyecto"}</h3>
+                <p className="line-clamp-3">{p.descripcion || "Información en actualización."}</p>
+                <footer>
+                  <span>{p.industria || "Emprendimiento"}</span>
+                  <strong>{formatMoney(Number(p.capital_requerido || 0))}</strong>
+                </footer>
+                <span className="mt-3 text-[10px] text-slate-400">Capital solicitado · Ver detalle ↗</span>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="dc-panel flex flex-col items-start justify-between gap-5 p-8 sm:flex-row sm:items-center">
+            <div className="flex items-start gap-5">
+              <span className="dc-editorial-icon"><BrandIcon name="scope" size={30}/></span>
+              <div>
+                <h3 className="text-lg font-bold">Estamos preparando el catálogo.</h3>
+                <p className="mt-2 text-sm leading-7 text-[#cbd5e1]">Aún no hay proyectos aprobados para mostrarse públicamente.</p>
+              </div>
+            </div>
+            <Link className="dc-btn dc-btn-primary shrink-0" href="/publicar">Presentar proyecto <BrandIcon name="arrow" size={18}/></Link>
+          </div>
+        )}
+      </section>
+
+      <section className="dc-trust-section">
+        <div className="dc-container dc-trust-layout">
+          <div>
+            <p className="dc-eyebrow mb-5">Confianza por diseño</p>
+            <h2 className="dc-section-title">Las mejores decisiones comienzan con <span className="text-[#facc15]">mejor información.</span></h2>
+            <p className="dc-section-copy mt-6">
+              Estamos construyendo procesos de revisión empresarial e identidad.
+              La verificación de DNI y las consultas financieras oficiales requieren
+              proveedores y autorizaciones que aún no están integrados.
+            </p>
+            <Link href="/verificacion" className="dc-btn dc-btn-outline mt-7">Nuestro enfoque de seguridad <BrandIcon name="arrow" size={17}/></Link>
+          </div>
+          <div className="dc-trust-steps">
+            {[
+              {icon:"shield" as const,title:"Identidad",description:"Validación oficial prevista"},
+              {icon:"layers" as const,title:"Negocio",description:"Contexto y documentación"},
+              {icon:"scope" as const,title:"Riesgo",description:"Información por revisar"},
+              {icon:"message" as const,title:"Decisión",description:"Conversaciones informadas"},
+            ].map(s=>(
+              <article key={s.title} className="dc-trust-step">
+                <span className="dc-editorial-icon"><BrandIcon name={s.icon} size={29}/></span>
+                <h3>{s.title}</h3><p>{s.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="dc-endcap">
+        <div className="dc-container dc-endcap-inner">
+          <div>
+            <p className="dc-eyebrow mb-5">El siguiente paso es tuyo</p>
+            <h2 className="dc-section-title">Toda gran oportunidad empieza con una conversación.</h2>
+          </div>
+          <Link className="dc-btn dc-btn-primary" href="/registro">Ser parte de DealCapital <BrandIcon name="arrow" size={18}/></Link>
         </div>
       </section>
     </main>

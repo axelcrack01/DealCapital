@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 import BrandIcon, { type BrandIconName } from "./components/BrandIcon";
 import AudienceSwitcher from "./components/AudienceSwitcher";
 import DealNetwork from "./components/DealNetwork";
+import EditorialPhoto from "./components/EditorialPhoto";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,7 @@ export default async function Home() {
               Las verificaciones oficiales aún no están habilitadas.
             </p>
           </div>
-          <DealNetwork/>
+          <EditorialPhoto name="collaboration" className="dc-hero-photo" sizes="(max-width: 980px) 90vw, 44vw" priority />
         </div>
       </section>
 
@@ -88,6 +89,27 @@ export default async function Home() {
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="dc-container dc-landing-section" aria-labelledby="dc-real-world">
+        <div className="dc-photo-mosaic">
+          <EditorialPhoto name="workshop" sizes="(max-width: 980px) 90vw, 48vw" />
+          <div className="dc-text-photo">
+            <p className="dc-eyebrow mb-5">Personas detrás de cada proyecto</p>
+            <h2 id="dc-real-world" className="dc-section-title">
+              Las oportunidades no son solo números. <span className="text-[#facc15]">Son historias por construir.</span>
+            </h2>
+            <p className="dc-section-copy mt-6">
+              Queremos que cada propuesta tenga espacio para explicar el problema
+              que resuelve, a quién ayuda y qué necesita para dar el siguiente paso.
+              La plataforma facilita el encuentro: la confianza se construye con diálogo,
+              documentación y comprobaciones independientes.
+            </p>
+            <Link href="/nosotros" className="dc-btn dc-btn-outline mt-7">
+              Conoce DealCapital <BrandIcon name="arrow" size={18}/>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -136,6 +158,26 @@ export default async function Home() {
             <Link className="dc-btn dc-btn-primary shrink-0" href="/publicar">Presentar proyecto <BrandIcon name="arrow" size={18}/></Link>
           </div>
         )}
+      </section>
+
+      <section className="dc-container dc-landing-section" aria-labelledby="dc-research">
+        <div className="dc-photo-mosaic">
+          <div className="dc-text-photo">
+            <p className="dc-eyebrow mb-5">Investigar antes de decidir</p>
+            <h2 className="dc-section-title" id="dc-research">
+              La información bien presentada es el inicio de un <span className="text-[#facc15]">mejor análisis.</span>
+            </h2>
+            <p className="dc-section-copy mt-6">
+              Un pitch es apenas el primer paso. Un inversionista necesita
+              conocer el modelo de negocio, revisar supuestos y contrastar
+              documentos antes de considerar cualquier compromiso.
+            </p>
+            <Link href="/inversionistas" className="dc-btn dc-btn-outline mt-7">
+              Cómo evaluar oportunidades <BrandIcon name="arrow" size={18}/>
+            </Link>
+          </div>
+          <EditorialPhoto name="analysis" sizes="(max-width: 980px) 90vw, 48vw"/>
+        </div>
       </section>
 
       <section className="dc-trust-section">

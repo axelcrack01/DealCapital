@@ -1,5 +1,6 @@
 import Link from "next/link";
 import BrandIcon from "../components/BrandIcon";
+import EditorialPhoto from "../components/EditorialPhoto";
 
 export const metadata = {
   title: "Para inversionistas",
@@ -31,11 +32,7 @@ export default function InversionistasPage() {
               <Link href="/verificacion" className="dc-btn dc-btn-outline">Cómo evaluamos la información <BrandIcon name="shield" size={19}/></Link>
             </div>
           </div>
-          <aside className="dc-insight-rail">
-            <span>Principio DealCapital</span>
-            <strong>Una oportunidad atractiva también necesita preguntas difíciles.</strong>
-            <p className="text-sm leading-7 text-[#cbd5e1]">Información disponible, fuentes comprobables y análisis propio.</p>
-          </aside>
+          <EditorialPhoto name="analysis" className="dc-side-photo" sizes="(max-width: 740px) 92vw, 38vw" priority/>
         </div>
       </section>
 

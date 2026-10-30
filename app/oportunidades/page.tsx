@@ -1,5 +1,7 @@
 import { supabase } from "../../lib/supabase";
 import OportunidadesClient, { type Opportunity } from "./OportunidadesClient";
+import BrandIcon from "../components/BrandIcon";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -20,20 +22,26 @@ export default async function Oportunidades() {
   }
 
   return (
-    <main className="min-h-screen">
-      <header className="border-b border-slate-800 bg-[#0b1929] py-16">
-        <div className="dc-container">
-          <p className="dc-eyebrow mb-5">Explora · DealCapital</p>
-          <h1 className="mb-5 max-w-4xl text-4xl font-bold tracking-tight text-white sm:text-6xl">
-            Encuentra oportunidades que merezcan tu atención.
-          </h1>
-          <p className="max-w-2xl text-base leading-8 text-slate-300">
-            Compara propuestas, conoce sus objetivos y conversa con sus responsables.
-            La información financiera es declarada por cada proyecto.
-          </p>
+    <main className="dc-landing min-h-screen">
+      <header className="dc-page-head">
+        <div className="dc-container dc-page-head-grid">
+          <div>
+            <p className="dc-kicker">Oportunidades / DealCapital</p>
+            <h1>Descubre negocios. <em>Empieza conversaciones.</em></h1>
+            <p className="mt-6">
+              Explora proyectos, compara sus propuestas y conoce cuánto capital buscan.
+              Las cifras y riesgos son información declarada por sus responsables.
+            </p>
+          </div>
+          <aside className="dc-insight-rail">
+            <span>Antes de contactar</span>
+            <strong>Observa el modelo de negocio, el uso del capital y la documentación.</strong>
+            <Link className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#facc15] hover:underline"
+              href="/inversionistas">Guía para inversionistas <BrandIcon name="arrow" size={17}/></Link>
+          </aside>
         </div>
       </header>
-      <section className="dc-container py-12">
+      <section className="dc-container py-12 sm:py-16">
         {error ? (
           <div role="status" className="dc-panel p-8">
             <h2 className="mb-3 text-xl font-bold">El catálogo no está disponible</h2>

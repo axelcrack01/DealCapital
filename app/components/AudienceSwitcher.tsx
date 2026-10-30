@@ -34,6 +34,14 @@ const journeys = {
 export default function AudienceSwitcher() {
   const [role, setRole] = useState<Role>("emprendedor");
   const current = journeys[role];
+  const toggleWithArrow = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      const next = role === "emprendedor" ? "inversionista" : "emprendedor";
+      setRole(next);
+      document.getElementById(next === "emprendedor" ? "dc-role-entrepreneur" : "dc-role-investor")?.focus();
+    }
+  };
   return (
     <section className="dc-journey" aria-labelledby="dc-journey-title">
       <div className="dc-container">
@@ -42,15 +50,15 @@ export default function AudienceSwitcher() {
             <p className="dc-eyebrow mb-4">Diseñado para ambos lados</p>
             <h2 id="dc-journey-title" className="dc-section-title">Un lugar. Dos caminos.</h2>
           </div>
-          <div className="dc-role-tabs" role="tablist" aria-label="Ver recorrido según tu perfil">
+          <div className="dc-role-tabs" role="tablist" aria-label="Ver recorrido según tu perfil" onKeyDown={toggleWithArrow}>
             <button type="button" role="tab" id="dc-role-entrepreneur"
-              aria-selected={role === "emprendedor"} aria-controls="dc-role-panel"
+              aria-selected={role === "emprendedor"} aria-controls="dc-role-panel" tabIndex={role === "emprendedor" ? 0 : -1}
               onClick={() => setRole("emprendedor")}
               className={"dc-role-tab" + (role === "emprendedor" ? " is-active" : "")}>
               Emprendedor
             </button>
             <button type="button" role="tab" id="dc-role-investor"
-              aria-selected={role === "inversionista"} aria-controls="dc-role-panel"
+              aria-selected={role === "inversionista"} aria-controls="dc-role-panel" tabIndex={role === "inversionista" ? 0 : -1}
               onClick={() => setRole("inversionista")}
               className={"dc-role-tab" + (role === "inversionista" ? " is-active" : "")}>
               Inversionista

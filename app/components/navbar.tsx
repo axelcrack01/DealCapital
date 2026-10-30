@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 const links = [
-  { href: "/", label: "Inicio" },
-  { href: "/nosotros", label: "Nosotros" },
   { href: "/oportunidades", label: "Oportunidades" },
+  { href: "/emprendedores", label: "Emprendedores" },
   { href: "/inversionistas", label: "Inversionistas" },
+  { href: "/nosotros", label: "Nosotros" },
   { href: "/contacto", label: "Contacto" },
 ];
 
@@ -81,7 +81,11 @@ export default function Navbar() {
         <button type="button" aria-expanded={menuOpen} aria-controls="dealcapital-mobile-nav"
           aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"} onClick={()=>setMenuOpen(v=>!v)}
           className="grid size-11 shrink-0 place-items-center rounded-lg border border-slate-700 text-2xl text-white xl:hidden">
-          {menuOpen ? "×" : "☰"}
+          {menuOpen ? (
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 5 19 19M19 5 5 19"/></svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M9 12h11M4 17h16"/></svg>
+          )}
         </button>
       </div>
       {menuOpen && (

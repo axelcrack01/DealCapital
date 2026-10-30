@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import BrandIcon from "../components/BrandIcon";
 import { useMemo, useState } from "react";
 
 export type Opportunity = {
@@ -69,17 +70,17 @@ export default function OportunidadesClient({ proyectos }: { proyectos: Opportun
       <div className="mb-7 flex items-center justify-between gap-3">
         <p aria-live="polite" className="text-sm text-slate-400"><strong className="text-white">{results.length}</strong> oportunidades</p>
         {(query || industry || sort !== "recent") && <button type="button" onClick={clear}
-          className="text-sm font-semibold text-amber-200 underline">Limpiar filtros</button>}
+          className="text-sm font-semibold text-[#facc15] underline">Limpiar filtros</button>}
       </div>
       {results.length ? (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {results.map(p => (
-            <article key={p.id} className="dc-panel group flex flex-col overflow-hidden transition-colors hover:border-amber-200/50">
+            <article key={p.id} className="dc-panel group flex flex-col overflow-hidden transition-colors hover:border-[#facc15]/50">
               <div className="dc-sheen relative h-44 overflow-hidden border-b border-slate-700">
                 {p.imagen_url
                   ? <img src={p.imagen_url} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />
-                  : <div className="grid size-full place-items-center text-6xl text-amber-200/40">✧</div>}
-                <span className="absolute left-4 top-4 rounded-lg bg-[#091827]/90 px-3 py-1.5 text-xs font-semibold text-amber-200">
+                  : <div className="grid size-full place-items-center text-[#facc15]/45"><BrandIcon name="venture" size={72}/></div>}
+                <span className="absolute left-4 top-4 rounded-lg bg-[#020817]/90 px-3 py-1.5 text-xs font-semibold text-[#facc15]">
                   {p.industria || "Emprendimiento"}
                 </span>
               </div>
@@ -91,7 +92,7 @@ export default function OportunidadesClient({ proyectos }: { proyectos: Opportun
                   <div><p className="mb-1 text-xs text-slate-400">Riesgo declarado</p><p className="text-sm font-bold text-white">{p.riesgo || "No informado"}</p></div>
                 </div>
                 <p className="mb-5 text-xs leading-5 text-slate-500">Revisión de publicación. No es una certificación crediticia.</p>
-                <Link href={"/oportunidades/" + p.id} className="dc-btn dc-btn-secondary w-full">Ver oportunidad <span aria-hidden="true">↗</span></Link>
+                <Link href={"/oportunidades/" + p.id} className="dc-btn dc-btn-secondary w-full">Ver oportunidad <BrandIcon name="arrow" size={17}/></Link>
               </div>
             </article>
           ))}

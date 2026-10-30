@@ -631,9 +631,11 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
  .dc-fusion-spotlight .dc-editorial-photo { min-height: 320px; }
 }
 @media (max-width: 480px) {
- .dc-fusion-visual { grid-template-columns: minmax(0,1fr) minmax(0,.85fr); grid-template-rows: 280px auto; gap: 8px; }
- .dc-fusion-main-photo { min-height: 280px; border-radius: 12px; }
- .dc-fusion-aside { gap: 8px; }
+ .dc-fusion-visual { grid-template-columns: minmax(0,1fr); grid-template-rows: auto auto auto; gap: 10px; }
+ .dc-fusion-main-photo { min-height: 0; aspect-ratio: 1.25 / 1; height: auto; border-radius: 12px; }
+ .dc-fusion-aside { grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-rows: auto; gap: 8px; }
+ .dc-fusion-info,.dc-fusion-inset { min-height: 226px; }
+ .dc-fusion-visual-caption { grid-column: 1; }
  .dc-fusion-info,.dc-fusion-inset { border-radius: 12px; padding: 13px; }
  .dc-fusion-info h2,.dc-fusion-inset strong { font-size: 14px; }
  .dc-fusion-info p { font-size: 10px; }

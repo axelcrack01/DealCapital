@@ -57,7 +57,7 @@ export default function EditorialPhoto({
         sizes={sizes}
         priority={priority}
         className="object-cover"
-        quality={78}
+        quality={75}
       />
       <div className="dc-photo-vignette" aria-hidden="true" />
       {showCaption && (

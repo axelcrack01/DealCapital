@@ -2,7 +2,7 @@ import Link from "next/link";
 import { supabase } from "../lib/supabase";
 import BrandIcon, { type BrandIconName } from "./components/BrandIcon";
 import AudienceSwitcher from "./components/AudienceSwitcher";
-import DealNetwork from "./components/DealNetwork";
+import HeroComposition from "./components/HeroComposition";
 import EditorialPhoto from "./components/EditorialPhoto";
 
 export const dynamic = "force-dynamic";
@@ -54,16 +54,38 @@ export default async function Home() {
                 Tengo un proyecto <BrandIcon name="venture" size={19}/>
               </Link>
             </div>
+            <nav className="dc-fusion-chapter" aria-label="Explorar la página">
+              <a href="#propuesta"><span>01</span> Qué hacemos</a>
+              <a href="#experiencia"><span>02</span> Tu recorrido</a>
+              <a href="#proyectos"><span>03</span> Proyectos</a>
+            </nav>
             <p className="dc-landing-disclaimer">
               Plataforma en fase MVP. No recibimos fondos ni garantizamos resultados de inversión.
               Las verificaciones oficiales aún no están habilitadas.
             </p>
           </div>
-          <EditorialPhoto name="collaboration" className="dc-hero-photo" sizes="(max-width: 980px) 90vw, 44vw" priority />
+          <HeroComposition/>
         </div>
       </section>
 
-      <section className="dc-container dc-landing-section" aria-labelledby="dc-value-title">
+      <section className="dc-fusion-strip" aria-label="Explora DealCapital según lo que necesitas">
+        <div className="dc-container dc-fusion-strip-grid">
+          <Link href="/emprendedores" className="dc-fusion-strip-item">
+            <strong><BrandIcon name="venture" size={20}/> Busco presentar mi negocio</strong>
+            <small>Organiza tu propuesta y necesidades de capital.</small>
+          </Link>
+          <Link href="/inversionistas" className="dc-fusion-strip-item">
+            <strong><BrandIcon name="compass" size={20}/> Quiero descubrir proyectos</strong>
+            <small>Encuentra oportunidades y compara información disponible.</small>
+          </Link>
+          <Link href="/verificacion" className="dc-fusion-strip-item">
+            <strong><BrandIcon name="shield" size={20}/> Me interesa la seguridad</strong>
+            <small>Conoce los controles previstos y sus límites actuales.</small>
+          </Link>
+        </div>
+      </section>
+
+      <section id="propuesta" className="dc-container dc-landing-section" aria-labelledby="dc-value-title">
         <div className="dc-editorial-intro">
           <div>
             <p className="dc-eyebrow mb-5">Lo que puedes hacer</p>
@@ -92,30 +114,32 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="dc-container dc-landing-section" aria-labelledby="dc-real-world">
-        <div className="dc-photo-mosaic">
-          <EditorialPhoto name="workshop" sizes="(max-width: 980px) 90vw, 48vw" />
-          <div className="dc-text-photo">
-            <p className="dc-eyebrow mb-5">Personas detrás de cada proyecto</p>
+      <section className="dc-container pb-16 sm:pb-24" aria-labelledby="dc-real-world">
+        <div className="dc-fusion-spotlight">
+          <EditorialPhoto name="workshop" sizes="(max-width: 740px) 92vw, 44vw" />
+          <div className="dc-fusion-spotlight-copy">
+            <p className="dc-eyebrow">Detrás de cada idea hay personas</p>
             <h2 id="dc-real-world" className="dc-section-title">
-              Las oportunidades no son solo números. <span className="text-[#facc15]">Son historias por construir.</span>
+              Cada emprendimiento tiene una <span className="text-[#facc15]">historia que contar.</span>
             </h2>
-            <p className="dc-section-copy mt-6">
-              Queremos que cada propuesta tenga espacio para explicar el problema
-              que resuelve, a quién ayuda y qué necesita para dar el siguiente paso.
-              La plataforma facilita el encuentro: la confianza se construye con diálogo,
-              documentación y comprobaciones independientes.
+            <p className="dc-section-copy">
+              Queremos que las propuestas expliquen qué problema resuelven, a quién
+              ayudan y cómo usarían el capital. Emprendedores e inversionistas
+              necesitan información que facilite una conversación útil.
             </p>
-            <Link href="/nosotros" className="dc-btn dc-btn-outline mt-7">
-              Conoce DealCapital <BrandIcon name="arrow" size={18}/>
+            <p className="dc-fusion-proofline"><BrandIcon name="shield" size={23}/>
+              Fotografía ilustrativa. No constituye una verificación de personas o proyectos.
+            </p>
+            <Link href="/nosotros" className="dc-btn dc-btn-outline mt-7 self-start">
+              Conoce nuestra historia <BrandIcon name="arrow" size={18}/>
             </Link>
           </div>
         </div>
       </section>
 
-      <AudienceSwitcher/>
+      <div id="experiencia"><AudienceSwitcher/></div>
 
-      <section className="dc-container dc-market-section" aria-labelledby="dc-market-title">
+      <section id="proyectos" className="dc-container dc-market-section" aria-labelledby="dc-market-title">
         <div className="dc-market-head">
           <div>
             <p className="dc-eyebrow mb-5">Explora el ecosistema</p>
@@ -180,7 +204,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="dc-trust-section">
+      <section id="confianza" className="dc-trust-section">
         <div className="dc-container dc-trust-layout">
           <div>
             <p className="dc-eyebrow mb-5">Confianza por diseño</p>

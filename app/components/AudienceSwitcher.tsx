@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import BrandIcon from "./BrandIcon";
 
 type Role = "emprendedor" | "inversionista";
@@ -34,7 +34,7 @@ const journeys = {
 export default function AudienceSwitcher() {
   const [role, setRole] = useState<Role>("emprendedor");
   const current = journeys[role];
-  const toggleWithArrow = (event: React.KeyboardEvent<HTMLDivElement>) => {
+  const toggleWithArrow = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
       const next = role === "emprendedor" ? "inversionista" : "emprendedor";

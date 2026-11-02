@@ -40,12 +40,11 @@ type Props = {
   priority?: boolean;
   sizes?: string;
   className?: string;
-  showCaption?: boolean;
 };
 
 export default function EditorialPhoto({
   name, priority = false, sizes = "(max-width: 768px) 100vw, 50vw",
-  className = "", showCaption = true,
+  className = "",
 }: Props) {
   const photo = catalog[name];
   return (
@@ -59,12 +58,6 @@ export default function EditorialPhoto({
         className="object-cover"
         quality={75}
       />
-      <div className="dc-photo-vignette" aria-hidden="true" />
-      {showCaption && (
-        <figcaption className="dc-photo-caption">
-          Fotografía ilustrativa · Unsplash
-        </figcaption>
-      )}
     </figure>
   );
 }

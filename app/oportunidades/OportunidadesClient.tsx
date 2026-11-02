@@ -67,7 +67,21 @@ export default function OportunidadesClient({ proyectos }: { proyectos: Opportun
           </select>
         </label>
       </div>
-      <div className="mb-7 flex items-center justify-between gap-3">
+      {industries.length > 0 && (
+        <div className="dc-market-filter-chips" role="group" aria-label="Filtros rápidos por industria">
+          <span className="mr-2 text-xs font-semibold text-slate-400">Explorar sectores</span>
+          <button type="button" className="dc-filter-chip" aria-pressed={!industry}
+            onClick={() => setIndustry("")}>Todos</button>
+          {industries.slice(0,5).map(i => (
+            <button type="button" key={i} className="dc-filter-chip"
+              aria-pressed={industry === i}
+              onClick={() => setIndustry(current => current === i ? "" : i)}>
+              {i}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
         <p aria-live="polite" className="text-sm text-slate-400"><strong className="text-white">{results.length}</strong> oportunidades</p>
         {(query || industry || sort !== "recent") && <button type="button" onClick={clear}
           className="text-sm font-semibold text-[#facc15] underline">Limpiar filtros</button>}

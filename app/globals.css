@@ -249,7 +249,7 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dc-section-copy { color: #cbd5e1; font-size: clamp(14px,1.25vw,16px); line-height: 1.85; }
 .dc-landing-section { padding-block: clamp(68px,8vw,116px); }
 .dc-landing-top { position: relative; isolation: isolate; border-bottom: 1px solid #253149; background: radial-gradient(ellipse at 81% 30%,rgba(250,204,21,.08),transparent 43%),linear-gradient(155deg,#061226,#020817 82%); }
-.dc-landing-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); align-items: center; gap: clamp(38px,5vw,80px); min-height: 620px; padding-block: clamp(70px,7vw,110px); }
+.dc-landing-hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); align-items: center; gap: clamp(38px,5vw,80px); min-height: 0; padding-top: clamp(20px,2.5vw,36px); padding-bottom: clamp(48px,5vw,72px); }
 .dc-landing-hero-copy { min-width: 0; }
 .dc-landing-hero h1 { margin: 22px 0 24px; font-size: clamp(44px,5.05vw,74px); font-weight: 830; line-height: 1.095; letter-spacing: -.066em; }
 .dc-landing-hero h1 em { font-style: normal; color: #facc15; }
@@ -363,7 +363,7 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
  .dc-founder-image { min-height: 340px; }
 }
 @media (max-width: 460px) {
- .dc-landing-hero { padding-block: 55px 61px; }
+ .dc-landing-hero { padding-top: 18px; padding-bottom: 42px; }
  .dc-landing-hero h1 { font-size: 42px; letter-spacing: -.05em; }
  .dc-network { min-height: auto; }
  .dc-network-head { padding: 20px 19px 0; }

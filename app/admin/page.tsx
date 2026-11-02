@@ -5,6 +5,8 @@ import {useEffect,useMemo,useState} from "react";
 import {useRouter} from "next/navigation";
 import {supabase} from "../../lib/supabase";
 import BrandIcon from "../components/BrandIcon";
+import AdminProjectReview from "./AdminProjectReview";
+import AdminReviewHistory from "./AdminReviewHistory";
 
 type Project = {id:number;nombre_proyecto:string|null;emprendedor:string|null;industria:string|null;capital_requerido:number|null;proyecto_verificado:boolean|null;created_at:string|null};
 type User = {id:string;nombre:string|null;email:string|null;tipo_usuario:string|null;perfil_verificado:boolean|null;empresa_verificada:boolean|null;created_at:string|null};
@@ -54,14 +56,13 @@ export default function Admin() {
           router.replace("/login");
           return;
         }
-        const {data:profile,error:roleErr}=await supabase.from("profiles").select("rol").eq("id",auth.user.id).maybeSingle();
-        if(!live)return;
-        if(roleErr||profile?.rol!=="admin"){
+        // getUser() is verified by Supabase Auth. app_metadata is controlled by
+        // authorized Auth admins; profiles.rol is user-controlled legacy data.
+        if(auth.user.app_metadata?.role!=="admin"){
           setAccess("denied");
-          router.replace("/");
           return;
         }
-        // This is only a visual gate. Backend authorization is enforced by RLS.
+        // Actual mutations are independently authorized by server-side RPC.
         setAccess("allowed");
         const [p,u,i]=await Promise.all([
           supabase.from("proyectos").select("id,nombre_proyecto,emprendedor,industria,capital_requerido,proyecto_verificado,created_at").order("created_at",{ascending:false}).limit(200),
@@ -119,7 +120,7 @@ export default function Admin() {
   if(access==="loading")return <main className="grid min-h-[60vh] place-items-center bg-[#020817] px-6 text-center text-white">
     <div role="status" className="space-y-4"><span className="mx-auto grid size-14 place-items-center rounded-2xl border border-[#3d506d] text-[#facc15]"><BrandIcon name="shield" size={30}/></span><h1 className="text-2xl font-bold">Verificando acceso administrativo</h1><p className={faint}>Comprobando tu sesión de DealCapital.</p></div>
   </main>;
-  if(access==="denied")return <main className="grid min-h-[60vh] place-items-center bg-[#020817] px-6 text-center text-white"><div className="space-y-5"><h1 className="text-2xl font-bold">Acceso restringido</h1><p className={faint}>Inicia sesión con una cuenta autorizada.</p><Link href="/" className="inline-flex rounded-xl bg-[#facc15] px-6 py-3 font-bold text-[#020817]">Volver a DealCapital</Link></div></main>;
+  if(access==="denied")return <main className="grid min-h-[60vh] place-items-center bg-[#020817] px-6 text-center text-white"><div className="space-y-5"><h1 className="text-2xl font-bold">Acceso restringido</h1><p className={faint}>Tu cuenta necesita el rol administrativo confiable de Supabase Auth. El rol de perfil antiguo ya no concede acceso.</p><Link href="/" className="inline-flex rounded-xl bg-[#facc15] px-6 py-3 font-bold text-[#020817]">Volver a DealCapital</Link></div></main>;
   return <main className="min-h-screen bg-[#020817] text-white">
     <div className="dc-container pb-20 pt-9 md:pt-14">
       <div className="mb-6 flex items-center gap-2 text-xs text-[#93a6c1]"><Link href="/" className="hover:text-[#facc15]">DealCapital</Link><span>/</span><span className="text-[#facc15]">Administración</span></div>
@@ -133,8 +134,8 @@ export default function Admin() {
       </div>
       <div className="mb-9 flex items-start gap-4 rounded-2xl border border-[#786129] bg-[#312b15] p-5 text-[#e9dfbd]" role="note">
         <BrandIcon name="shield" size={26} className="mt-1 shrink-0 text-[#facc15]"/>
-        <div><strong className="block text-sm text-white">Operaciones sensibles pendientes de autorización segura</strong>
-        <p className="mt-2 text-xs leading-6">Las políticas RLS actuales limitan las consultas de usuarios e interesados; el rol del perfil todavía no es una prueba segura de autorización. Por eso las aprobaciones y cambios de verificación permanecen deshabilitados hasta corregir el backend. Las marcas existentes no certifican identidades ni finanzas.</p></div>
+        <div><strong className="block text-sm text-white">Publicaciones con autorización y auditoría</strong>
+        <p className="mt-2 text-xs leading-6">Solo los administradores habilitados en Supabase Auth pueden revisar publicaciones. Cada aprobación o retiro requiere un motivo y queda registrado. Las verificaciones de identidad, empresa y solvencia permanecen deshabilitadas y no están certificadas por RENIEC ni SBS.</p></div>
       </div>
       {errors.length>0&&<div className="mb-6 rounded-xl border border-rose-500/40 bg-rose-950/20 p-5 text-sm text-rose-200" role="alert"><strong>Consultas con incidencias</strong>{errors.map(e=><p className="mt-2" key={e}>{e}</p>)}</div>}
 
@@ -179,6 +180,7 @@ export default function Admin() {
               <span className={badge(!!p.proyecto_verificado)}>{p.proyecto_verificado?"Con marca":"Sin marca"}</span>
             </Link>) : <p className={"py-7 text-sm "+faint}>No hay proyectos accesibles.</p>}
           </section>
+          <AdminReviewHistory refreshToken={reload}/>
         </div> : <section className="p-5 lg:p-7">
           <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div><h3 className="text-xl font-extrabold">{tab==="proyectos"?"Registro de proyectos":tab==="usuarios"?"Perfiles de usuarios":"Interés en proyectos"}</h3><p className={"mt-2 text-xs "+faint}>Vista de lectura según los permisos de la sesión.</p></div>
@@ -193,18 +195,18 @@ export default function Admin() {
             : <div className="overflow-x-auto rounded-xl border border-[#344760]">
               <table className="w-full min-w-[680px] border-collapse text-left text-xs">
                 <thead className="bg-[#142640] text-[#afc1d6]"><tr>
-                  {tab==="proyectos"?<><th className="p-4">Proyecto</th><th className="p-4">Capital</th><th className="p-4">Fecha</th><th className="p-4">Publicación</th><th className="p-4">Detalle</th></>:
+                  {tab==="proyectos"?<><th className="p-4">Proyecto</th><th className="p-4">Capital</th><th className="p-4">Fecha</th><th className="p-4">Publicación</th><th className="p-4">Revisión</th></>:
                   tab==="usuarios"?<><th className="p-4">Usuario</th><th className="p-4">Perfil</th><th className="p-4">Registro</th><th className="p-4">Marcas internas</th></>:
                   <><th className="p-4">Interesado</th><th className="p-4">Proyecto</th><th className="p-4">Fecha</th><th className="p-4">Mensaje</th></>}
                 </tr></thead>
                 <tbody className="divide-y divide-[#2c405d]">
-                  {tab==="proyectos"&&(rows as Project[]).map(p=><tr key={p.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{p.nombre_proyecto||"Proyecto"}</strong><small className={faint}>{p.industria||"Sin sector"} · {p.emprendedor||"Sin responsable"}</small></td><td className="p-4 font-bold">{money(Number(p.capital_requerido||0))}</td><td className="p-4">{date(p.created_at)}</td><td className="p-4"><span className={badge(!!p.proyecto_verificado)}>{p.proyecto_verificado?"Con marca":"Sin marca"}</span></td><td className="p-4"><Link href={"/oportunidades/"+p.id} className="font-bold text-[#facc15]">Ver detalle</Link></td></tr>)}
+                  {tab==="proyectos"&&(rows as Project[]).map(p=><tr key={p.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{p.nombre_proyecto||"Proyecto"}</strong><small className={faint}>{p.industria||"Sin sector"} · {p.emprendedor||"Sin responsable"}</small></td><td className="p-4 font-bold">{money(Number(p.capital_requerido||0))}</td><td className="p-4">{date(p.created_at)}</td><td className="p-4"><span className={badge(!!p.proyecto_verificado)}>{p.proyecto_verificado?"Con marca":"Sin marca"}</span></td><td className="p-4"><AdminProjectReview projectId={p.id} published={!!p.proyecto_verificado} onReviewed={()=>setReload(v=>v+1)}/>{p.proyecto_verificado&&<Link href={"/oportunidades/"+p.id} className="mt-2 block text-[11px] font-bold text-[#facc15]">Ver publicación</Link>}</td></tr>)}
                   {tab==="usuarios"&&(rows as User[]).map(u=><tr key={u.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{u.nombre||"Sin nombre"}</strong><small className={faint}>{u.email||"Correo no disponible"}</small></td><td className="p-4">{u.tipo_usuario||"No definido"}</td><td className="p-4">{date(u.created_at)}</td><td className="p-4"><span className={badge(!!u.perfil_verificado)}>{u.perfil_verificado?"Perfil marcado":"Sin marca"}</span><span className={"ml-1 "+badge(!!u.empresa_verificada)}>{u.empresa_verificada?"Empresa marcada":"Sin marca"}</span></td></tr>)}
                   {tab==="interesados"&&(rows as Interest[]).map(i=><tr key={i.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{i.nombre||"Interesado"}</strong><small className={faint}>{i.email||"Sin correo"}</small></td><td className="p-4">{i.proyecto_id?names.get(i.proyecto_id)||"Proyecto #"+i.proyecto_id:"Sin asociar"}</td><td className="p-4">{date(i.created_at)}</td><td className="max-w-60 truncate p-4" title={i.mensaje||""}>{i.mensaje||"Sin mensaje"}</td></tr>)}
                 </tbody>
               </table>
             </div>}
-          <p className={"mt-5 text-xs leading-6 "+faint}>Límite: 200 registros por consulta. Las acciones de aprobación y cambios de roles requieren backend seguro y políticas RLS específicas para administración.</p>
+          <p className={"mt-5 text-xs leading-6 "+faint}>Límite: 200 registros por consulta. Publicar o retirar proyectos registra una decisión auditada. La gestión de roles y las verificaciones de identidad siguen reservadas para procesos autorizados separados.</p>
         </section>}
       </div>
       <div className={"mt-8 flex flex-col justify-between gap-3 text-xs sm:flex-row "+faint}><span>DealCapital Operations · Panel MVP</span><Link href="/contacto" className="hover:text-[#facc15]">Contacto y soporte</Link></div>

@@ -8,11 +8,15 @@ export default async function DetalleProyecto({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!/^\d+$/.test(id)) {
+    return <main className="dc-container py-20 text-white"><h1 className="text-3xl font-bold">Proyecto no encontrado</h1></main>;
+  }
 
   const { data: proyecto } = await supabase
     .from("proyectos")
     .select("*")
     .eq("id", id)
+    .eq("proyecto_verificado", true)
     .single();
 
   if (!proyecto) {
@@ -23,15 +27,6 @@ export default async function DetalleProyecto({
     );
   }
 
-  const progreso =
-    Number(proyecto.capital_requerido || 0) > 0
-      ? Math.min(
-          (Number(proyecto.monto_recaudado || 0) /
-            Number(proyecto.capital_requerido)) *
-            100,
-          100
-        )
-      : 0;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white px-6 py-20">
@@ -74,19 +69,19 @@ export default async function DetalleProyecto({
               <div className="flex flex-wrap gap-3 mb-6">
                 {proyecto.proyecto_verificado && (
                   <span className="bg-green-600 px-4 py-2 rounded-full">
-                    ✅ Proyecto revisado
+                    Proyecto revisado para publicación
                   </span>
                 )}
 
                 {proyecto.riesgo && (
                   <span className="bg-slate-800 px-4 py-2 rounded-full">
-                    Riesgo: {proyecto.riesgo}
+                    Riesgo declarado: {proyecto.riesgo}
                   </span>
                 )}
 
                 {proyecto.roi_estimado && (
                   <span className="bg-slate-800 px-4 py-2 rounded-full">
-                    ROI: {proyecto.roi_estimado}
+                    ROI declarado: {proyecto.roi_estimado}
                   </span>
                 )}
               </div>
@@ -139,26 +134,10 @@ export default async function DetalleProyecto({
                   )}`}
                 />
 
-                <Metric
-                  label="Monto recaudado"
-                  value={`S/ ${Number(proyecto.monto_recaudado || 0).toLocaleString(
-                    "es-PE"
-                  )}`}
-                />
-
-                <div>
-                  <div className="flex justify-between text-sm text-slate-400 mb-2">
-                    <span>Progreso</span>
-                    <span>{Math.round(progreso)}%</span>
-                  </div>
-
-                  <div className="w-full bg-slate-800 h-4 rounded-full">
-                    <div
-                      className="bg-yellow-500 h-4 rounded-full"
-                      style={{ width: `${progreso}%` }}
-                    />
-                  </div>
-                </div>
+                <p className="text-xs leading-6 text-slate-400">
+                  El capital indicado es solicitado por el emprendedor. DealCapital
+                  todavía no reconcilia ni certifica fondos efectivamente transferidos.
+                </p>
 
                 <Metric
                   label="Retorno ofrecido"
@@ -166,7 +145,7 @@ export default async function DetalleProyecto({
                 />
 
                 <Metric
-                  label="ROI estimado"
+                  label="ROI estimado (declarado)"
                   value={proyecto.roi_estimado || "No especificado"}
                 />
 
@@ -176,11 +155,11 @@ export default async function DetalleProyecto({
                 />
 
                 <Metric
-                  label="Nivel de riesgo"
+                  label="Riesgo declarado"
                   value={proyecto.riesgo || "No especificado"}
                 />
 
-                <Metric label="Contacto" value={proyecto.email} />
+                <p className="text-xs leading-6 text-slate-400">Los datos de contacto se comparten mediante el flujo de interés. Una revisión de publicación no acredita la identidad civil ni la solvencia de una persona.</p>
               </div>
 
               <a
@@ -216,11 +195,20 @@ function InfoCard({ title, text }: any) {
   );
 }
 
-function FileButton({ href, label }: any) {
+function FileButton({ href, label }: { href: string; label: string }) {
+  let validated: string;
+  try {
+    const parsed = new URL(href);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+    validated = parsed.href;
+  } catch {
+    return null;
+  }
   return (
     <a
-      href={href}
+      href={validated}
       target="_blank"
+      rel="noopener noreferrer"
       className="bg-slate-800 hover:bg-yellow-500 hover:text-black px-5 py-3 rounded-xl font-bold text-yellow-400"
     >
       {label}

@@ -1,134 +1,108 @@
+import Link from "next/link";
+import BrandIcon from "../components/BrandIcon";
+
+export const metadata = {
+  title: "Nosotros",
+  description: "Conoce el origen, la misión y la visión de DealCapital, una plataforma en desarrollo para emprendedores e inversionistas.",
+};
+
 export default function Nosotros() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white px-6 py-20">
-      <section className="max-w-6xl mx-auto">
-        <h1 className="text-5xl font-bold mb-6">Nosotros</h1>
-
-        <p className="text-slate-300 text-lg mb-12">
-          DealCapital nace para conectar emprendedores que necesitan capital con
-          inversionistas interesados en oportunidades reales de crecimiento.
-        </p>
-
-        <div className="grid md:grid-cols-2 gap-10 items-center bg-slate-900 p-8 rounded-2xl mb-16">
+    <main className="dc-landing">
+      <section className="dc-page-head">
+        <div className="dc-container dc-page-head-grid">
           <div>
-            <h2 className="text-3xl font-bold mb-4">¿Quiénes somos?</h2>
-
-            <p className="text-slate-300 mb-6">
-              Somos una plataforma digital en desarrollo que busca facilitar el
-              contacto entre emprendedores e inversionistas, promoviendo
-              conexiones transparentes, accesibles y enfocadas en el crecimiento.
+            <p className="dc-kicker">La historia detrás de DealCapital</p>
+            <h1>Creemos en las buenas ideas. <em>Y en las personas que las impulsan.</em></h1>
+            <p className="mt-6">
+              DealCapital nace para acortar la distancia entre quienes construyen
+              negocios y quienes buscan conocer nuevas oportunidades. Estamos
+              desarrollando una plataforma digital que facilite ese primer encuentro.
             </p>
-
-            <h2 className="text-3xl font-bold mb-4">Fundador</h2>
-
-            <p className="text-slate-300">
-              Mi nombre es Axel Valladares, fundador y creador de DealCapital.
-              Esta idea nace al identificar que muchos emprendedores tienen
-              oportunidades reales, pero no siempre cuentan con el capital
-              necesario para desarrollarlas.
-            </p>
-
-            <a
-              href="https://www.linkedin.com/in/axel-daniel-valladares-flores-0770662ba/"
-              target="_blank"
-              className="inline-block mt-6 bg-yellow-500 text-black px-6 py-3 rounded-xl font-bold"
-            >
-              Conectar en LinkedIn
-            </a>
-          </div>
-
-          <div className="text-center">
-            <img
-              src="/fundador.png"
-              alt="Axel Valladares, fundador de DealCapital"
-              className="w-56 h-56 mx-auto rounded-full object-cover mb-4 border-4 border-yellow-500"
-            />
-
-            <h3 className="text-2xl font-bold">Axel Valladares</h3>
-            <p className="text-yellow-400">Founder & CEO</p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-16">
-          <div className="bg-slate-900 p-6 rounded-2xl">
-            <h3 className="text-3xl font-bold text-yellow-400">MVP</h3>
-            <p className="text-slate-300">Plataforma funcional en desarrollo</p>
-          </div>
-
-          <div className="bg-slate-900 p-6 rounded-2xl">
-            <h3 className="text-3xl font-bold text-yellow-400">24/7</h3>
-            <p className="text-slate-300">Acceso digital a oportunidades</p>
-          </div>
-
-          <div className="bg-slate-900 p-6 rounded-2xl">
-            <h3 className="text-3xl font-bold text-yellow-400">LatAm</h3>
-            <p className="text-slate-300">Visión de crecimiento regional</p>
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <div className="bg-slate-900 p-8 rounded-2xl">
-            <h2 className="text-3xl font-bold mb-4">Misión</h2>
-            <p className="text-slate-300">
-              Facilitar conexiones transparentes entre emprendedores e
-              inversionistas para impulsar negocios con potencial de crecimiento.
-            </p>
-          </div>
-
-          <div className="bg-slate-900 p-8 rounded-2xl">
-            <h2 className="text-3xl font-bold mb-4">Visión</h2>
-            <p className="text-slate-300">
-              Convertirnos en una plataforma referente para conectar capital y
-              oportunidades en Latinoamérica.
-            </p>
-          </div>
-        </div>
-
-        <div className="mb-16">
-          <h2 className="text-3xl font-bold mb-6">Valores</h2>
-
-          <div className="grid md:grid-cols-4 gap-6">
-            {["Transparencia", "Confianza", "Innovación", "Crecimiento"].map(
-              (valor) => (
-                <div key={valor} className="bg-slate-900 p-6 rounded-2xl">
-                  <h3 className="text-xl font-bold text-yellow-400">
-                    {valor}
-                  </h3>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-3xl font-bold mb-6">
-            Timeline de DealCapital
-          </h2>
-
-          <div className="space-y-6">
-            <div className="bg-slate-900 p-6 rounded-2xl border-l-4 border-yellow-500">
-              <h3 className="font-bold text-xl">2026 — Idea inicial</h3>
-              <p className="text-slate-300">
-                Nace la idea de conectar emprendedores con inversionistas.
-              </p>
-            </div>
-
-            <div className="bg-slate-900 p-6 rounded-2xl border-l-4 border-yellow-500">
-              <h3 className="font-bold text-xl">2026 — Validación</h3>
-              <p className="text-slate-300">
-                Se consulta a potenciales usuarios y se valida el interés en la
-                plataforma.
-              </p>
-            </div>
-
-            <div className="bg-slate-900 p-6 rounded-2xl border-l-4 border-yellow-500">
-              <h3 className="font-bold text-xl">2026 — MVP funcional</h3>
-              <p className="text-slate-300">
-                Se desarrolla la primera versión con publicación de proyectos,
-                oportunidades e interesados.
-              </p>
+            <div className="dc-landing-actions">
+              <Link href="/oportunidades" className="dc-btn dc-btn-primary">Conocer oportunidades <BrandIcon name="arrow" size={18}/></Link>
+              <Link href="/contacto" className="dc-btn dc-btn-outline">Conversar con nosotros <BrandIcon name="message" size={19}/></Link>
             </div>
           </div>
+          <aside className="dc-insight-rail">
+            <span>Nuestro propósito</span>
+            <strong>Hacer más accesible el encuentro entre emprendimiento y capital.</strong>
+            <p className="text-sm leading-7 text-[#cbd5e1]">Tecnología al servicio de conexiones más claras y conversaciones mejor informadas.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section className="dc-container dc-landing-section">
+        <div className="dc-editorial-intro">
+          <div><p className="dc-eyebrow mb-5">Nuestra perspectiva</p><h2 className="dc-section-title">Un ecosistema más abierto empieza con información clara.</h2></div>
+          <p className="dc-section-copy">Nuestro objetivo no es reemplazar el criterio de un inversionista, sino facilitar que conozca proyectos y pueda iniciar una evaluación propia.</p>
+        </div>
+        <div className="dc-outline-list">
+          {[
+            {icon:"compass" as const,title:"Acceso",body:"Crear un punto de encuentro para personas que buscan impulsar o descubrir proyectos."},
+            {icon:"document" as const,title:"Transparencia",body:"Promover descripciones comprensibles, riesgos declarados y documentación relevante."},
+            {icon:"growth" as const,title:"Evolución",body:"Desarrollar una experiencia útil, segura y adaptable a las necesidades del ecosistema."},
+          ].map(x=>(
+            <article key={x.title} className="dc-outline-item">
+              <BrandIcon name={x.icon} size={35}/>
+              <h3>{x.title}</h3><p>{x.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="dc-journey">
+        <div className="dc-container">
+          <div className="mb-9">
+            <p className="dc-eyebrow mb-5">Quién está detrás</p>
+            <h2 className="dc-section-title">Una idea que comenzó con una pregunta.</h2>
+          </div>
+          <div className="dc-founder-card">
+            <div className="dc-founder-copy">
+              <p className="dc-kicker mb-5">Fundador de DealCapital</p>
+              <h3 className="mb-5 text-3xl font-bold tracking-tight text-white">Axel Valladares</h3>
+              <p>
+                DealCapital surge al identificar que muchos emprendimientos
+                necesitan visibilidad, información y conexiones para acceder
+                a nuevas posibilidades de crecimiento. Hoy el proyecto
+                avanza como plataforma tecnológica en fase MVP.
+              </p>
+              <p className="mt-5">
+                La prioridad es desarrollar un espacio donde cada parte pueda
+                conocer mejor a la otra y donde la confianza se construya con hechos.
+              </p>
+              <a href="https://www.linkedin.com/in/axel-daniel-valladares-flores-0770662ba/"
+                rel="noopener noreferrer" target="_blank"
+                className="dc-btn dc-btn-outline mt-8">
+                Ver perfil en LinkedIn <BrandIcon name="arrow" size={18}/>
+              </a>
+            </div>
+            <div className="dc-founder-image">
+              <img src="/fundador.png" alt="Fotografía del fundador de DealCapital" loading="lazy"/>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="dc-container dc-landing-section">
+        <div className="grid gap-9 lg:grid-cols-2">
+          <div className="dc-panel p-8 sm:p-10">
+            <span className="dc-editorial-icon mb-7"><BrandIcon name="scope" size={32}/></span>
+            <h2 className="mb-4 text-2xl font-bold">Misión</h2>
+            <p className="dc-section-copy">Facilitar conexiones entre emprendedores e inversionistas con información accesible, procesos comprensibles y herramientas digitales.</p>
+          </div>
+          <div className="dc-panel p-8 sm:p-10">
+            <span className="dc-editorial-icon mb-7"><BrandIcon name="compass" size={32}/></span>
+            <h2 className="mb-4 text-2xl font-bold">Visión</h2>
+            <p className="dc-section-copy">Contribuir al crecimiento del ecosistema emprendedor mediante una plataforma cada vez más confiable y útil para ambas partes.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="dc-endcap">
+        <div className="dc-container dc-endcap-inner">
+          <div><p className="dc-eyebrow mb-5">Conecta con el ecosistema</p><h2 className="dc-section-title">El futuro de DealCapital también se construye con nuevas ideas.</h2></div>
+          <Link href="/contacto" className="dc-btn dc-btn-primary">Hablemos <BrandIcon name="arrow" size={18}/></Link>
         </div>
       </section>
     </main>

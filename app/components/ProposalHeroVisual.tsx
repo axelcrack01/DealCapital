@@ -2,23 +2,42 @@ import Link from "next/link";
 import EditorialPhoto from "./EditorialPhoto";
 import BrandIcon from "./BrandIcon";
 
-/** Homepage hero from the approved DealCapital unified visual proposal. */
+/**
+ * Responsive editorial composition.
+ * The photo and information cards are separate grid children: no overlapping,
+ * no clipped faces, no conflicting absolute positioning.
+ */
 export default function ProposalHeroVisual() {
   return (
-    <div className="dc-up-visual" aria-label="Personas creando oportunidades de negocio">
-      <EditorialPhoto name="collaboration" priority
-        sizes="(max-width: 740px) 90vw, (max-width: 1100px) 55vw, 32vw"
-        className="dc-up-photo" />
-      <article className="dc-up-float dc-up-float-dark">
-        <span className="dc-up-card-index">01 / DESCUBRE</span>
-        <h2>Grandes ideas merecen ser vistas.</h2>
-        <p>Explora sectores, conoce propuestas y encuentra nuevas perspectivas.</p>
-      </article>
-      <Link href="/oportunidades" className="dc-up-float dc-up-float-gold">
-        <span className="dc-up-card-index">02 / CONECTA</span>
-        <strong>La próxima conversación puede cambiarlo todo.</strong>
-        <span className="dc-up-card-link">Conoce el ecosistema <BrandIcon name="arrow" size={17}/></span>
-      </Link>
+    <div className="dc-refined-visual" aria-label="Ideas, proyectos y conexiones en DealCapital">
+      <EditorialPhoto
+        name="collaboration"
+        priority
+        sizes="(max-width: 560px) 90vw, (max-width: 900px) 66vw, 27vw"
+        className="dc-refined-photo"
+      />
+      <div className="dc-refined-stories">
+        <div className="dc-refined-story dc-refined-story-dark">
+          <span className="dc-refined-label">01 / DESCUBRE</span>
+          <span className="dc-refined-story-icon" aria-hidden="true">
+            <BrandIcon name="compass" size={30}/>
+          </span>
+          <div>
+            <h2>Ideas con potencial para explorar.</h2>
+            <p>Conoce proyectos, sectores y objetivos antes de decidir.</p>
+          </div>
+        </div>
+        <Link href="/oportunidades" className="dc-refined-story dc-refined-story-yellow">
+          <span className="dc-refined-label">02 / CONECTA</span>
+          <span className="dc-refined-story-icon" aria-hidden="true">
+            <BrandIcon name="link" size={30}/>
+          </span>
+          <div>
+            <strong>La siguiente oportunidad empieza aquí.</strong>
+            <span className="dc-refined-cta">Explorar proyectos <BrandIcon name="arrow" size={18}/></span>
+          </div>
+        </Link>
+      </div>
     </div>
   );
 }

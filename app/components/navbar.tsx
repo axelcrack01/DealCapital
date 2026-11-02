@@ -67,7 +67,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        <nav aria-label="Navegación principal" className="hidden items-center gap-1 lg:flex">
+        <nav aria-label="Navegación principal" className="hidden items-center gap-1 xl:flex">
           {links.map(({href,label}) => (
             <Link key={href} href={href}
               aria-current={isActive(href) ? "page" : undefined}
@@ -77,7 +77,7 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-2 lg:flex">
+        <div className="hidden shrink-0 items-center gap-2 xl:flex">
           {signedIn ? (
             <>
               <Link href="/dashboard" className="dc-nav-link">Mi panel</Link>
@@ -100,7 +100,7 @@ export default function Navbar() {
         <button type="button" aria-expanded={menuOpen} aria-controls="dealcapital-mobile-nav"
           aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
           onClick={() => setMenuOpen(v => !v)}
-          className="grid size-11 shrink-0 place-items-center rounded-lg border border-slate-700 text-white lg:hidden">
+          className="grid size-11 shrink-0 place-items-center rounded-lg border border-slate-700 text-white xl:hidden">
           {menuOpen ? (
             <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 5 19 19M19 5 5 19"/></svg>
           ) : (
@@ -113,9 +113,9 @@ export default function Navbar() {
         <>
           <button type="button" aria-label="Cerrar menú de navegación"
             onClick={() => setMenuOpen(false)}
-            className="fixed inset-x-0 top-[76px] z-0 h-[calc(100dvh-76px)] bg-[#020817]/75 lg:hidden" />
+            className="fixed inset-x-0 top-[76px] z-0 h-[calc(100dvh-76px)] bg-[#020817]/75 xl:hidden" />
           <nav id="dealcapital-mobile-nav" aria-label="Navegación móvil"
-            className="dc-mobile-nav absolute left-0 right-0 top-full z-10 max-h-[calc(100dvh-76px)] overflow-y-auto border-b border-slate-700 bg-[#061226] shadow-2xl lg:hidden">
+            className="dc-mobile-nav absolute left-0 right-0 top-full z-10 max-h-[calc(100dvh-76px)] overflow-y-auto border-b border-slate-700 bg-[#061226] shadow-2xl xl:hidden">
             <div className="dc-container flex flex-col gap-1 py-5">
               {links.map(({href,label}) => (
                 <Link key={href} href={href}

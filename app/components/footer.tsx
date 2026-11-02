@@ -67,7 +67,7 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-[#30405a] bg-[#061124] text-[#cbd5e1]">
-      <div className="dc-container grid gap-10 py-14 sm:py-16 lg:grid-cols-[1.55fr_.8fr_.9fr_.9fr] lg:gap-8">
+      <div className="dc-container grid gap-10 py-14 sm:grid-cols-2 sm:py-16 lg:grid-cols-[1.55fr_.8fr_.9fr_.9fr] lg:gap-8">
         <div className="lg:pr-7">
           <Link href="/" className="mb-5 inline-flex items-center gap-3"
             aria-label="DealCapital, volver al inicio">

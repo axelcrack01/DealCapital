@@ -4,6 +4,7 @@ import BrandIcon, { type BrandIconName } from "./components/BrandIcon";
 import AudienceSwitcher from "./components/AudienceSwitcher";
 import HeroComposition from "./components/HeroComposition";
 import EditorialPhoto from "./components/EditorialPhoto";
+import HomeFAQ from "./components/HomeFAQ";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,7 @@ export default async function Home() {
               <a href="#propuesta"><span>01</span> Qué hacemos</a>
               <a href="#experiencia"><span>02</span> Tu recorrido</a>
               <a href="#proyectos"><span>03</span> Proyectos</a>
+              <a href="#preguntas"><span>04</span> Preguntas</a>
             </nav>
             <p className="dc-landing-disclaimer">
               Plataforma en fase MVP. No recibimos fondos ni garantizamos resultados de inversión.
@@ -231,6 +233,7 @@ export default async function Home() {
           </div>
         </div>
       </section>
+      <div id="preguntas"><HomeFAQ/></div>
       <section className="dc-endcap">
         <div className="dc-container dc-endcap-inner">
           <div>

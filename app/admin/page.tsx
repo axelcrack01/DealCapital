@@ -1,227 +1,213 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import Link from "next/link";
+import {useEffect,useMemo,useState} from "react";
+import {useRouter} from "next/navigation";
+import {supabase} from "../../lib/supabase";
+import BrandIcon from "../components/BrandIcon";
+
+type Project = {id:number;nombre_proyecto:string|null;emprendedor:string|null;industria:string|null;capital_requerido:number|null;proyecto_verificado:boolean|null;created_at:string|null};
+type User = {id:string;nombre:string|null;email:string|null;tipo_usuario:string|null;perfil_verificado:boolean|null;empresa_verificada:boolean|null;created_at:string|null};
+type Interest = {id:number;proyecto_id:number|null;nombre:string|null;email:string|null;mensaje:string|null;created_at:string|null};
+type Section = "resumen"|"proyectos"|"usuarios"|"interesados";
+type Access = "loading"|"allowed"|"denied";
+const money = (n:number) => new Intl.NumberFormat("es-PE",{style:"currency",currency:"PEN",maximumFractionDigits:0}).format(n);
+const date = (s:string|null) => {
+  if(!s) return "Sin fecha";
+  const d=new Date(s);
+  return Number.isNaN(d.getTime())?"Sin fecha":new Intl.DateTimeFormat("es-PE",{day:"2-digit",month:"short",year:"numeric"}).format(d);
+};
+const sections: {key:Section;label:string;icon:"growth"|"venture"|"layers"|"message"}[]=[
+  {key:"resumen",label:"Resumen",icon:"growth"},
+  {key:"proyectos",label:"Proyectos",icon:"venture"},
+  {key:"usuarios",label:"Usuarios",icon:"layers"},
+  {key:"interesados",label:"Interesados",icon:"message"},
+];
+const panel="rounded-2xl border border-[#2c405d] bg-[#0b1a31]";
+const faint="text-[#a8b9d0]";
+const badge=(active:boolean)=>"inline-flex rounded-full border px-3 py-1.5 text-[11px] font-bold "+(active?"border-[#facc15]/45 bg-[#facc15]/10 text-[#facc15]":"border-[#42526c] bg-[#15243a] text-[#b4c4d8]");
 
 export default function Admin() {
-  const [autorizado, setAutorizado] = useState(false);
-  const [cargando, setCargando] = useState(true);
-  const [proyectos, setProyectos] = useState<any[]>([]);
-  const [interesados, setInteresados] = useState<any[]>([]);
-  const [usuarios, setUsuarios] = useState<any[]>([]);
+  const router=useRouter();
+  const [access,setAccess]=useState<Access>("loading");
+  const [busy,setBusy]=useState(true);
+  const [projects,setProjects]=useState<Project[]>([]);
+  const [users,setUsers]=useState<User[]>([]);
+  const [interests,setInterests]=useState<Interest[]>([]);
+  const [errors,setErrors]=useState<string[]>([]);
+  const [tab,setTab]=useState<Section>("resumen");
+  const [query,setQuery]=useState("");
+  const [filter,setFilter]=useState("all");
+  const [reload,setReload]=useState(0);
+  const [updated,setUpdated]=useState<string|null>(null);
 
-  const cargarDatos = async () => {
-    const { data: proyectosData } = await supabase
-      .from("proyectos")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    const { data: interesadosData } = await supabase
-      .from("interesados")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    const { data: usuariosData } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    setProyectos(proyectosData || []);
-    setInteresados(interesadosData || []);
-    setUsuarios(usuariosData || []);
-  };
-
-  useEffect(() => {
-    const verificarAdmin = async () => {
-      const { data } = await supabase.auth.getUser();
-
-      if (!data.user) {
-        window.location.href = "/login";
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("rol")
-        .eq("id", data.user.id)
-        .single();
-
-      if (profile?.rol !== "admin") {
-        window.location.href = "/";
-        return;
-      }
-
-      setAutorizado(true);
-      await cargarDatos();
-      setCargando(false);
-    };
-
-    verificarAdmin();
-  }, []);
-
-  const verificarProyecto = async (id: number, estadoActual: boolean) => {
-    const { error } = await supabase
-      .from("proyectos")
-      .update({ proyecto_verificado: !estadoActual })
-      .eq("id", id);
-
-    if (error) {
-      alert(error.message);
-      return;
+  useEffect(()=>{
+    let live=true;
+    async function load(){
+      setBusy(true);
+      setErrors([]);
+      try{
+        const {data:auth,error:authErr}=await supabase.auth.getUser();
+        if(!live)return;
+        if(authErr||!auth.user){
+          setAccess("denied");
+          router.replace("/login");
+          return;
+        }
+        const {data:profile,error:roleErr}=await supabase.from("profiles").select("rol").eq("id",auth.user.id).maybeSingle();
+        if(!live)return;
+        if(roleErr||profile?.rol!=="admin"){
+          setAccess("denied");
+          router.replace("/");
+          return;
+        }
+        // This is only a visual gate. Backend authorization is enforced by RLS.
+        setAccess("allowed");
+        const [p,u,i]=await Promise.all([
+          supabase.from("proyectos").select("id,nombre_proyecto,emprendedor,industria,capital_requerido,proyecto_verificado,created_at").order("created_at",{ascending:false}).limit(200),
+          supabase.from("profiles").select("id,nombre,email,tipo_usuario,perfil_verificado,empresa_verificada,created_at").order("created_at",{ascending:false}).limit(200),
+          supabase.from("interesados").select("id,proyecto_id,nombre,email,mensaje,created_at").order("created_at",{ascending:false}).limit(200)
+        ]);
+        if(!live)return;
+        const notices:string[]=[];
+        if(p.error)notices.push("Proyectos: "+p.error.message);
+        if(u.error)notices.push("Usuarios: "+u.error.message);
+        if(i.error)notices.push("Interesados: "+i.error.message);
+        setErrors(notices);
+        setProjects((p.data||[]) as Project[]);
+        setUsers((u.data||[]) as User[]);
+        setInterests((i.data||[]) as Interest[]);
+        setUpdated(new Intl.DateTimeFormat("es-PE",{hour:"2-digit",minute:"2-digit"}).format(new Date()));
+      }catch{
+        if(live)setErrors(["No se pudieron cargar los registros. Vuelve a intentarlo."]);
+      }finally{if(live)setBusy(false);}
     }
+    void load();
+    return()=>{live=false;};
+  },[router,reload]);
 
-    await cargarDatos();
-  };
-
-  const actualizarUsuario = async (
-    id: string,
-    campo: "perfil_verificado" | "empresa_verificada",
-    estadoActual: boolean
-  ) => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({ [campo]: !estadoActual })
-      .eq("id", id);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    await cargarDatos();
-  };
-
-  if (cargando) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-white p-10">
-        Verificando acceso...
-      </main>
-    );
-  }
-
-  if (!autorizado) return null;
-
-  return (
-    <main className="min-h-screen bg-slate-950 text-white p-10">
-      <h1 className="text-5xl font-bold mb-10">Panel Admin</h1>
-
-      <section className="mb-14">
-        <h2 className="text-3xl font-bold mb-6">Usuarios</h2>
-
-        <div className="space-y-4">
-          {usuarios.map((u) => (
-            <div key={u.id} className="bg-slate-900 p-5 rounded-xl">
-              <h3 className="text-xl font-bold">
-                {u.nombre || "Sin nombre"}
-              </h3>
-
-              <p>Email: {u.email}</p>
-              <p>Tipo: {u.tipo_usuario || "No definido"}</p>
-
-              <p>
-                Perfil:{" "}
-                {u.perfil_verificado ? (
-                  <span className="text-green-400">✅ Verificado</span>
-                ) : (
-                  <span className="text-red-400">❌ Pendiente</span>
-                )}
-              </p>
-
-              <p>
-                Empresa:{" "}
-                {u.empresa_verificada ? (
-                  <span className="text-green-400">✅ Verificada</span>
-                ) : (
-                  <span className="text-red-400">❌ Pendiente</span>
-                )}
-              </p>
-
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() =>
-                    actualizarUsuario(
-                      u.id,
-                      "perfil_verificado",
-                      u.perfil_verificado
-                    )
-                  }
-                  className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold"
-                >
-                  {u.perfil_verificado
-                    ? "Quitar verificación perfil"
-                    : "Verificar perfil"}
-                </button>
-
-                <button
-                  onClick={() =>
-                    actualizarUsuario(
-                      u.id,
-                      "empresa_verificada",
-                      u.empresa_verificada
-                    )
-                  }
-                  className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold"
-                >
-                  {u.empresa_verificada
-                    ? "Quitar verificación empresa"
-                    : "Verificar empresa"}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mb-14">
-        <h2 className="text-3xl font-bold mb-6">Proyectos publicados</h2>
-
-        <div className="space-y-4">
-          {proyectos.map((p) => (
-            <div key={p.id} className="bg-slate-900 p-5 rounded-xl">
-              <h3 className="text-xl font-bold">{p.nombre_proyecto}</h3>
-
-              <p>Emprendedor: {p.emprendedor}</p>
-              <p>Email: {p.email}</p>
-              <p>Capital: S/ {p.capital_requerido}</p>
-
-              <p className="mt-2">
-                Estado:{" "}
-                {p.proyecto_verificado ? (
-                  <span className="text-green-400">✅ Verificado</span>
-                ) : (
-                  <span className="text-red-400">❌ Pendiente</span>
-                )}
-              </p>
-
-              <button
-                onClick={() =>
-                  verificarProyecto(p.id, p.proyecto_verificado)
-                }
-                className="mt-4 bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold"
-              >
-                {p.proyecto_verificado
-                  ? "Quitar verificación"
-                  : "Verificar Proyecto"}
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-3xl font-bold mb-6">Interesados</h2>
-
-        <div className="space-y-4">
-          {interesados.map((i) => (
-            <div key={i.id} className="bg-slate-900 p-5 rounded-xl">
-              <h3 className="text-xl font-bold">{i.nombre}</h3>
-              <p>Email: {i.email}</p>
-              <p>Proyecto ID: {i.proyecto_id}</p>
-              <p>Mensaje: {i.mensaje || "Sin mensaje"}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
+  const totals=useMemo(()=>({
+    marked:projects.filter(p=>p.proyecto_verificado===true).length,
+    unmarked:projects.filter(p=>p.proyecto_verificado!==true).length,
+    amount:projects.reduce((n,p)=>n+Number(p.capital_requerido||0),0)
+  }),[projects]);
+  const names=useMemo(()=>new Map(projects.map(p=>[p.id,p.nombre_proyecto||"Proyecto"])),[projects]);
+  const rows=useMemo(()=>{
+    const q=query.trim().toLowerCase();
+    if(tab==="proyectos")return projects.filter(p=>{
+      const match=!q||[p.nombre_proyecto,p.emprendedor,p.industria,String(p.id)].filter(Boolean).join(" ").toLowerCase().includes(q);
+      return match&&(filter==="all"||(filter==="marked"?!!p.proyecto_verificado:!p.proyecto_verificado));
+    });
+    if(tab==="usuarios")return users.filter(u=>{
+      const match=!q||[u.nombre,u.email,u.tipo_usuario].filter(Boolean).join(" ").toLowerCase().includes(q);
+      return match&&(filter==="all"||(filter==="marked"?!!u.perfil_verificado:!u.perfil_verificado));
+    });
+    if(tab==="interesados")return interests.filter(i=>!q||[i.nombre,i.email,i.mensaje,String(i.proyecto_id||"")].filter(Boolean).join(" ").toLowerCase().includes(q));
+    return [];
+  },[tab,query,filter,projects,users,interests]);
+  const switchTab=(id:Section)=>{setTab(id);setQuery("");setFilter("all");};
+  const tile=(label:string,count:string,icon:"venture"|"clock"|"layers"|"message",note:string)=>(
+    <div className={panel+" p-5 sm:p-6"}>
+      <div className="flex items-center justify-between">
+        <p className={"text-xs font-semibold "+faint}>{label}</p>
+        <span className="grid size-10 place-items-center rounded-xl bg-[#162b47] text-[#facc15]"><BrandIcon name={icon} size={21}/></span>
+      </div>
+      <strong className="mt-5 block text-4xl font-extrabold tracking-tight text-white">{busy?"—":count}</strong>
+      <p className={"mt-3 text-[11px] "+faint}>{note}</p>
+    </div>
   );
+  if(access==="loading")return <main className="grid min-h-[60vh] place-items-center bg-[#020817] px-6 text-center text-white">
+    <div role="status" className="space-y-4"><span className="mx-auto grid size-14 place-items-center rounded-2xl border border-[#3d506d] text-[#facc15]"><BrandIcon name="shield" size={30}/></span><h1 className="text-2xl font-bold">Verificando acceso administrativo</h1><p className={faint}>Comprobando tu sesión de DealCapital.</p></div>
+  </main>;
+  if(access==="denied")return <main className="grid min-h-[60vh] place-items-center bg-[#020817] px-6 text-center text-white"><div className="space-y-5"><h1 className="text-2xl font-bold">Acceso restringido</h1><p className={faint}>Inicia sesión con una cuenta autorizada.</p><Link href="/" className="inline-flex rounded-xl bg-[#facc15] px-6 py-3 font-bold text-[#020817]">Volver a DealCapital</Link></div></main>;
+  return <main className="min-h-screen bg-[#020817] text-white">
+    <div className="dc-container pb-20 pt-9 md:pt-14">
+      <div className="mb-6 flex items-center gap-2 text-xs text-[#93a6c1]"><Link href="/" className="hover:text-[#facc15]">DealCapital</Link><span>/</span><span className="text-[#facc15]">Administración</span></div>
+      <div className="mb-9 flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-end">
+        <div className="max-w-3xl">
+          <p className="mb-4 text-[11px] font-extrabold uppercase tracking-[.16em] text-[#facc15]">Centro de operaciones / MVP</p>
+          <h1 className="text-[clamp(35px,4vw,56px)] font-extrabold leading-tight tracking-[-.055em]">Panel de <span className="text-[#facc15]">administración.</span></h1>
+          <p className={"mt-4 max-w-2xl text-sm leading-7 "+faint}>Supervisa publicaciones, perfiles e interesados desde un espacio organizado. Las cifras representan únicamente registros accesibles a tu sesión.</p>
+        </div>
+        <button disabled={busy} type="button" onClick={()=>setReload(x=>x+1)} className="flex min-h-11 items-center gap-2 rounded-xl border border-[#445979] px-5 text-sm font-bold text-white transition hover:border-[#facc15] disabled:opacity-60"><BrandIcon name="clock" size={18}/>{busy?"Actualizando…":"Actualizar datos"}</button>
+      </div>
+      <div className="mb-9 flex items-start gap-4 rounded-2xl border border-[#786129] bg-[#312b15] p-5 text-[#e9dfbd]" role="note">
+        <BrandIcon name="shield" size={26} className="mt-1 shrink-0 text-[#facc15]"/>
+        <div><strong className="block text-sm text-white">Operaciones sensibles pendientes de autorización segura</strong>
+        <p className="mt-2 text-xs leading-6">Las políticas RLS actuales limitan las consultas de usuarios e interesados; el rol del perfil todavía no es una prueba segura de autorización. Por eso las aprobaciones y cambios de verificación permanecen deshabilitados hasta corregir el backend. Las marcas existentes no certifican identidades ni finanzas.</p></div>
+      </div>
+      {errors.length>0&&<div className="mb-6 rounded-xl border border-rose-500/40 bg-rose-950/20 p-5 text-sm text-rose-200" role="alert"><strong>Consultas con incidencias</strong>{errors.map(e=><p className="mt-2" key={e}>{e}</p>)}</div>}
+
+      <div className="mb-11 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {tile("Proyectos accesibles",String(projects.length),"venture","Registros disponibles")}
+        {tile("Sin marca de publicación",String(totals.unmarked),"clock","Pendientes de evaluación")}
+        {tile("Perfiles accesibles",String(users.length),"layers","Con límites de RLS")}
+        {tile("Interesados accesibles",String(interests.length),"message","Con límites de RLS")}
+      </div>
+
+      <div className={panel+" overflow-hidden"}>
+        <div className="flex flex-col justify-between gap-4 border-b border-[#2c405d] p-5 sm:flex-row sm:items-end sm:p-7">
+          <div><p className="text-[11px] font-bold uppercase tracking-[.14em] text-[#facc15]">Gestión del ecosistema</p><h2 className="mt-2 text-2xl font-extrabold tracking-tight">Operaciones y seguimiento</h2><p className={"mt-2 text-xs "+faint}>{updated?"Última actualización: "+updated:"Consultando información…"}</p></div>
+          <Link href="/oportunidades" className="inline-flex items-center gap-2 text-xs font-bold text-[#facc15] hover:underline">Ver sitio público <BrandIcon name="arrow" size={17}/></Link>
+        </div>
+        <div className="flex flex-wrap gap-1 border-b border-[#2c405d] px-3 pt-3 sm:px-6" role="tablist" aria-label="Secciones de administración">
+          {sections.map(s=><button key={s.key} role="tab" aria-selected={tab===s.key} type="button" onClick={()=>switchTab(s.key)} className={"flex items-center gap-2 rounded-t-xl border-b-2 px-4 py-3 text-xs font-bold transition "+(tab===s.key?"border-[#facc15] bg-[#152740] text-[#facc15]":"border-transparent text-[#9fb2ca] hover:bg-[#12233d] hover:text-white")}><BrandIcon name={s.icon} size={18}/>{s.label}</button>)}
+        </div>
+
+        {tab==="resumen" ? <div className="grid gap-5 p-5 lg:grid-cols-2 lg:p-7">
+          <section className="rounded-2xl border border-[#334660] bg-[#0e2039] p-6">
+            <div className="flex justify-between gap-3"><div><p className="text-[11px] font-bold uppercase tracking-widest text-[#facc15]">Publicaciones</p><h3 className="mt-2 text-xl font-bold">Estado de proyectos</h3></div><BrandIcon name="venture" size={28} className="text-[#facc15]"/></div>
+            <div className="mt-7 flex items-baseline gap-3"><strong className="text-5xl font-extrabold">{projects.length}</strong><span className={"text-xs "+faint}>proyectos accesibles</span></div>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#35465e]"><div className="h-full rounded-full bg-[#facc15]" style={{width: projects.length?(100*totals.marked/projects.length)+"%":"0%"}}/></div>
+            <div className="mt-4 flex flex-wrap justify-between gap-3 text-xs"><span className="text-[#facc15]">Con marca: {totals.marked}</span><span className={faint}>Sin marca: {totals.unmarked}</span></div>
+            <p className={"mt-5 text-xs leading-6 "+faint}>Las marcas actuales de publicación no equivalen a una validación financiera.</p>
+            <button type="button" onClick={()=>switchTab("proyectos")} className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#facc15]">Revisar registros <BrandIcon name="arrow" size={17}/></button>
+          </section>
+          <section className="rounded-2xl border border-[#334660] bg-[#0e2039] p-6">
+            <div className="flex justify-between gap-3"><div><p className="text-[11px] font-bold uppercase tracking-widest text-[#facc15]">Capital solicitado</p><h3 className="mt-2 text-xl font-bold">Importes declarados</h3></div><BrandIcon name="invest" size={28} className="text-[#facc15]"/></div>
+            <strong className="mt-8 block break-words text-3xl font-extrabold tracking-tight sm:text-4xl">{money(totals.amount)}</strong>
+            <p className={"mt-5 text-xs leading-6 "+faint}>Suma del capital solicitado por los proyectos visibles. No es dinero recaudado ni garantizado.</p>
+            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <button onClick={()=>switchTab("usuarios")} className="flex justify-between rounded-xl border border-[#354965] px-4 py-4 text-xs font-bold hover:border-[#facc15]">Ver perfiles <BrandIcon name="arrow" size={17}/></button>
+              <button onClick={()=>switchTab("interesados")} className="flex justify-between rounded-xl border border-[#354965] px-4 py-4 text-xs font-bold hover:border-[#facc15]">Ver interesados <BrandIcon name="arrow" size={17}/></button>
+            </div>
+          </section>
+          <section className="rounded-2xl border border-[#334660] bg-[#0e2039] p-6 lg:col-span-2">
+            <div className="mb-5 flex justify-between gap-3"><div><p className="text-[11px] font-bold uppercase tracking-widest text-[#facc15]">Actividad</p><h3 className="mt-2 text-xl font-bold">Publicaciones recientes</h3></div><button type="button" onClick={()=>switchTab("proyectos")} className="text-xs font-bold text-[#facc15]">Ver todas</button></div>
+            {projects.length ? projects.slice(0,5).map(p=><Link href={"/oportunidades/"+p.id} key={p.id} className="flex items-center justify-between gap-3 border-t border-[#334660] py-4 transition hover:bg-[#152b48]">
+              <span className="min-w-0"><strong className="block truncate text-sm">{p.nombre_proyecto||"Proyecto"}</strong><small className={"mt-1 block text-xs "+faint}>{p.industria||"Sin sector"} · {date(p.created_at)}</small></span>
+              <span className={badge(!!p.proyecto_verificado)}>{p.proyecto_verificado?"Con marca":"Sin marca"}</span>
+            </Link>) : <p className={"py-7 text-sm "+faint}>No hay proyectos accesibles.</p>}
+          </section>
+        </div> : <section className="p-5 lg:p-7">
+          <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div><h3 className="text-xl font-extrabold">{tab==="proyectos"?"Registro de proyectos":tab==="usuarios"?"Perfiles de usuarios":"Interés en proyectos"}</h3><p className={"mt-2 text-xs "+faint}>Vista de lectura según los permisos de la sesión.</p></div>
+            <span className={badge(false)}>{rows.length} resultados</span>
+          </div>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+            <label className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-[#3c506b] bg-[#07162b] px-4 py-3 focus-within:border-[#facc15]"><BrandIcon name="scope" size={19} className="shrink-0 text-[#facc15]"/><span className="sr-only">Buscar registros</span><input type="search" placeholder="Buscar en los registros..." value={query} onChange={e=>setQuery(e.target.value)} className="w-full min-w-0 bg-transparent text-sm text-white outline-none placeholder:text-[#7f91ac]"/></label>
+            {tab!=="interesados"&&<label className="rounded-xl border border-[#3c506b] bg-[#07162b] px-3 py-2"><span className="sr-only">Filtrar estado</span><select className="h-full w-full bg-transparent text-sm text-white outline-none" value={filter} onChange={e=>setFilter(e.target.value)}><option className="bg-[#07162b]" value="all">Todos los estados</option><option className="bg-[#07162b]" value="marked">Con marca</option><option className="bg-[#07162b]" value="unmarked">Sin marca</option></select></label>}
+          </div>
+          {busy?<div className={"rounded-xl border border-[#344760] p-8 text-sm "+faint}>Actualizando registros…</div>
+            : !rows.length?<div className="rounded-xl border border-dashed border-[#3c506b] p-9 text-center"><BrandIcon name="compass" size={30} className="mx-auto text-[#facc15]"/><h4 className="mt-3 font-bold">Sin resultados disponibles</h4><p className={"mt-2 text-xs "+faint}>Revisa tus filtros o los permisos de acceso de la base de datos.</p><button className="mt-4 text-xs font-bold text-[#facc15]" onClick={()=>{setQuery("");setFilter("all");}}>Limpiar filtros</button></div>
+            : <div className="overflow-x-auto rounded-xl border border-[#344760]">
+              <table className="w-full min-w-[680px] border-collapse text-left text-xs">
+                <thead className="bg-[#142640] text-[#afc1d6]"><tr>
+                  {tab==="proyectos"?<><th className="p-4">Proyecto</th><th className="p-4">Capital</th><th className="p-4">Fecha</th><th className="p-4">Publicación</th><th className="p-4">Detalle</th></>:
+                  tab==="usuarios"?<><th className="p-4">Usuario</th><th className="p-4">Perfil</th><th className="p-4">Registro</th><th className="p-4">Marcas internas</th></>:
+                  <><th className="p-4">Interesado</th><th className="p-4">Proyecto</th><th className="p-4">Fecha</th><th className="p-4">Mensaje</th></>}
+                </tr></thead>
+                <tbody className="divide-y divide-[#2c405d]">
+                  {tab==="proyectos"&&(rows as Project[]).map(p=><tr key={p.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{p.nombre_proyecto||"Proyecto"}</strong><small className={faint}>{p.industria||"Sin sector"} · {p.emprendedor||"Sin responsable"}</small></td><td className="p-4 font-bold">{money(Number(p.capital_requerido||0))}</td><td className="p-4">{date(p.created_at)}</td><td className="p-4"><span className={badge(!!p.proyecto_verificado)}>{p.proyecto_verificado?"Con marca":"Sin marca"}</span></td><td className="p-4"><Link href={"/oportunidades/"+p.id} className="font-bold text-[#facc15]">Ver detalle</Link></td></tr>)}
+                  {tab==="usuarios"&&(rows as User[]).map(u=><tr key={u.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{u.nombre||"Sin nombre"}</strong><small className={faint}>{u.email||"Correo no disponible"}</small></td><td className="p-4">{u.tipo_usuario||"No definido"}</td><td className="p-4">{date(u.created_at)}</td><td className="p-4"><span className={badge(!!u.perfil_verificado)}>{u.perfil_verificado?"Perfil marcado":"Sin marca"}</span><span className={"ml-1 "+badge(!!u.empresa_verificada)}>{u.empresa_verificada?"Empresa marcada":"Sin marca"}</span></td></tr>)}
+                  {tab==="interesados"&&(rows as Interest[]).map(i=><tr key={i.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{i.nombre||"Interesado"}</strong><small className={faint}>{i.email||"Sin correo"}</small></td><td className="p-4">{i.proyecto_id?names.get(i.proyecto_id)||"Proyecto #"+i.proyecto_id:"Sin asociar"}</td><td className="p-4">{date(i.created_at)}</td><td className="max-w-60 truncate p-4" title={i.mensaje||""}>{i.mensaje||"Sin mensaje"}</td></tr>)}
+                </tbody>
+              </table>
+            </div>}
+          <p className={"mt-5 text-xs leading-6 "+faint}>Límite: 200 registros por consulta. Las acciones de aprobación y cambios de roles requieren backend seguro y políticas RLS específicas para administración.</p>
+        </section>}
+      </div>
+      <div className={"mt-8 flex flex-col justify-between gap-3 text-xs sm:flex-row "+faint}><span>DealCapital Operations · Panel MVP</span><Link href="/contacto" className="hover:text-[#facc15]">Contacto y soporte</Link></div>
+    </div>
+  </main>;
 }

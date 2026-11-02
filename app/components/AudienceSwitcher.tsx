@@ -7,20 +7,20 @@ import BrandIcon from "./BrandIcon";
 type Role = "emprendedor" | "inversionista";
 const journeys = {
   emprendedor: {
-    overline: "Una idea necesita una buena presentación",
-    title: "Prepara el terreno para tu próxima conversación.",
-    description: "Presenta qué estás construyendo, el problema que resuelves y el uso previsto del capital. Tu propuesta podrá revisarse antes de aparecer en el catálogo.",
+    overline: "Para quienes están construyendo",
+    title: "Tu idea merece una presentación a su altura.",
+    description: "Comparte tu propuesta de valor, presenta la necesidad de capital y facilita que otras personas entiendan el potencial y los desafíos de tu negocio.",
     route: "/publicar",
-    action: "Presentar un proyecto",
+    action: "Preparar mi proyecto",
     items: [
-      { icon: "document" as const, text: "Estructura tu propuesta y documentos" },
-      { icon: "scope" as const, text: "Explica tu modelo y necesidad de capital" },
-      { icon: "link" as const, text: "Conecta con personas interesadas" },
+      { icon: "document" as const, text: "Organiza tu idea y modelo de negocio" },
+      { icon: "scope" as const, text: "Explica el capital que necesitas" },
+      { icon: "link" as const, text: "Conecta con posibles interesados" },
     ],
   },
   inversionista: {
-    overline: "Descubre antes de decidir",
-    title: "Explora proyectos con mejor contexto.",
+    overline: "Para quienes buscan oportunidades",
+    title: "Descubre proyectos con una mirada más clara.",
     description: "Consulta la propuesta, el sector y los riesgos declarados. Usa esta información como punto de partida para hacer preguntas y realizar tu propia diligencia debida.",
     route: "/oportunidades",
     action: "Ver oportunidades",
@@ -47,21 +47,21 @@ export default function AudienceSwitcher() {
       <div className="dc-container">
         <div className="dc-journey-heading">
           <div>
-            <p className="dc-eyebrow mb-4">Diseñado para ambos lados</p>
-            <h2 id="dc-journey-title" className="dc-section-title">Un lugar. Dos caminos.</h2>
+            <p className="dc-eyebrow mb-4">02 / Experiencia personalizada</p>
+            <h2 id="dc-journey-title" className="dc-section-title">Dos perfiles. <em>Un punto de encuentro.</em></h2>
           </div>
           <div className="dc-role-tabs" role="tablist" aria-label="Ver recorrido según tu perfil" onKeyDown={toggleWithArrow}>
             <button type="button" role="tab" id="dc-role-entrepreneur"
               aria-selected={role === "emprendedor"} aria-controls="dc-role-panel" tabIndex={role === "emprendedor" ? 0 : -1}
               onClick={() => setRole("emprendedor")}
               className={"dc-role-tab" + (role === "emprendedor" ? " is-active" : "")}>
-              Emprendedor
+              Soy emprendedor
             </button>
             <button type="button" role="tab" id="dc-role-investor"
               aria-selected={role === "inversionista"} aria-controls="dc-role-panel" tabIndex={role === "inversionista" ? 0 : -1}
               onClick={() => setRole("inversionista")}
               className={"dc-role-tab" + (role === "inversionista" ? " is-active" : "")}>
-              Inversionista
+              Soy inversionista
             </button>
           </div>
         </div>

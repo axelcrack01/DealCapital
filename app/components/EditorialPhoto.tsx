@@ -58,7 +58,6 @@ export default function EditorialPhoto({
         className="object-cover"
         quality={75}
       />
-      <div className="dc-photo-vignette" aria-hidden="true" />
     </figure>
   );
 }

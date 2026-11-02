@@ -62,6 +62,20 @@ export default function Admin() {
           setAccess("denied");
           return;
         }
+        // RLS reads app_metadata from the JWT, which can be stale after
+        // the admin role is provisioned. Refresh only when the cached token
+        // has not yet received the trusted role.
+        const {data:sessionData}=await supabase.auth.getSession();
+        if(!live)return;
+        if(sessionData.session?.user?.app_metadata?.role!=="admin"){
+          const {data:refreshed,error:refreshError}=await supabase.auth.refreshSession();
+          if(!live)return;
+          if(refreshError||refreshed.session?.user?.app_metadata?.role!=="admin"){
+            setErrors(["Tu sesión necesita renovarse. Cierra sesión y vuelve a iniciar sesión para usar el panel de administración."]);
+            setAccess("denied");
+            return;
+          }
+        }
         // Actual mutations are independently authorized by server-side RPC.
         setAccess("allowed");
         const [p,u,i]=await Promise.all([

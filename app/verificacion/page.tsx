@@ -1,3 +1,6 @@
+import Link from "next/link";
+import BrandIcon from "../components/BrandIcon";
+
 export const metadata = {
   title: "Verificación de identidad | DealCapital",
   description: "Información sobre las verificaciones de identidad y evaluación documental previstas en DealCapital.",
@@ -49,6 +52,19 @@ export default function VerificacionPage() {
           </p>
         </div>
 
+        <section className="mb-11 grid gap-5 rounded-2xl border border-[#344b6b] bg-[#10223b] p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-8" aria-labelledby="identity-start-heading">
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-widest text-[#facc15]">DealCapital Identity · Fase 1</p>
+            <h2 id="identity-start-heading" className="text-xl font-extrabold text-white sm:text-2xl">Conoce nuestro recorrido de confianza.</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Explora las etapas previstas de identidad, emprendimiento e información financiera.
+              Esta primera versión es informativa y no recopila DNI, biometría ni reportes crediticios.
+            </p>
+          </div>
+          <Link href="/identidad" className="dc-btn dc-btn-primary whitespace-nowrap">
+            Explorar DealCapital Identity <BrandIcon name="arrow" size={18}/>
+          </Link>
+        </section>
         <h2 className="text-2xl font-bold mb-6">Cómo será el proceso</h2>
         <ol className="grid md:grid-cols-2 gap-5 mb-10">
           {steps.map((step) => (

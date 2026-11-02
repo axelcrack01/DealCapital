@@ -64,7 +64,20 @@ export default function Registro() {
         <section className="p-7 sm:p-12">
           <p className="dc-eyebrow mb-5">Únete a DealCapital</p>
           <h2 className="mb-3 text-3xl font-bold tracking-tight text-white">Crear cuenta</h2>
-          <p className="mb-7 text-sm leading-7 text-slate-400">El registro no acredita identidad ni solvencia. Aún no solicitamos DNI: esa función necesita un proveedor autorizado.</p>
+          <p className="mb-5 text-sm leading-7 text-slate-400">El registro no acredita identidad ni solvencia. Aún no solicitamos DNI: esa función necesita un proveedor autorizado.</p>
+          <div className="mb-7 flex items-start gap-3 rounded-xl border border-[#415778] bg-[#102740] p-4 text-sm">
+            <span aria-hidden="true" className="mt-0.5 text-[#facc15]">●</span>
+            <div>
+              <strong className="text-white">DealCapital Identity · Fase de preparación</strong>
+              <p className="mt-1 text-xs leading-6 text-[#bdd0e3]">
+                Conoce cómo se incorporarán los controles de identidad, representación y evaluación documental.
+                No necesitas enviar información sensible durante este registro.
+              </p>
+              <Link href="/identidad" className="mt-2 inline-block text-xs font-bold text-[#facc15] underline-offset-4 hover:underline">
+                Conocer el futuro proceso de identidad
+              </Link>
+            </div>
+          </div>
           {success ? <div role="status" className="rounded-xl border border-emerald-300/30 bg-emerald-950/25 p-6">
             <h3 className="mb-3 text-lg font-bold text-emerald-200">Registro procesado</h3>
             <p className="mb-5 text-sm leading-7 text-slate-300">{message}</p>

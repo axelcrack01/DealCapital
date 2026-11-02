@@ -1,129 +1,113 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
+const links = [
+  { href: "/oportunidades", label: "Oportunidades" },
+  { href: "/emprendedores", label: "Emprendedores" },
+  { href: "/inversionistas", label: "Inversionistas" },
+  { href: "/nosotros", label: "Nosotros" },
+  { href: "/contacto", label: "Contacto" },
+];
+
 export default function Navbar() {
-  const [userName, setUserName] = useState<string | null>(null);
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const [name, setName] = useState<string | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const getUser = async () => {
+    let alive = true;
+    const readAuth = async () => {
       const { data } = await supabase.auth.getUser();
-
-      if (data.user) {
-        const nombre =
-          data.user.user_metadata?.nombre || data.user.email || "Usuario";
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("nombre, foto_url")
-          .eq("id", data.user.id)
-          .single();
-
-        setUserName(profile?.nombre || nombre);
-        setFotoUrl(profile?.foto_url || null);
-      }
+      if (!alive) return;
+      setSignedIn(Boolean(data.user));
+      setName(data.user?.user_metadata?.nombre || data.user?.email?.split("@")[0] || null);
     };
-
-    getUser();
+    void readAuth();
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!alive) return;
+      setSignedIn(Boolean(session?.user));
+      setName(session?.user?.user_metadata?.nombre || session?.user?.email?.split("@")[0] || null);
+    });
+    return () => { alive = false; authListener.subscription.unsubscribe(); };
   }, []);
 
-  const cerrarSesion = async () => {
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+
+  const signOut = async () => {
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.assign("/");
   };
 
+  const navItem = ({href,label}: {href:string;label:string}) => (
+    <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}
+      className={"text-[13px] font-semibold transition-colors hover:text-[#facc15] " +
+        (pathname === href ? "text-[#facc15]" : "text-[#cbd5e1]")}>{label}</Link>
+  );
+
   return (
-    <nav className="sticky top-0 z-50 bg-[#020817]/95 border-b border-slate-800 backdrop-blur">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="/" className="flex items-center gap-3 shrink-0">
-          <img
-            src="/logo.png"
-            alt="DealCapital"
-            className="w-11 h-11 bg-white p-1"
-          />
-          <span className="text-xl font-extrabold text-white">
-            Deal<span className="text-yellow-400">Capital</span>
+    <header className="sticky top-0 z-50 border-b border-slate-700/70 bg-[#020817]/95 backdrop-blur-lg">
+      <div className="dc-container flex h-[78px] min-w-0 items-center justify-between gap-5">
+        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-3" aria-label="DealCapital, página de inicio">
+          <img src="/logo.png" alt="" width={42} height={42} className="size-[42px] shrink-0 rounded-md bg-white object-contain p-1" />
+          <span className="text-xl font-extrabold tracking-tight text-white">
+            Deal<span className="text-[#facc15]">Capital</span>
           </span>
-        </a>
-
-        <div className="hidden lg:flex items-center gap-7 text-slate-200 font-medium">
-          <a href="/" className="hover:text-yellow-400">Inicio</a>
-          <a href="/nosotros" className="hover:text-yellow-400">Nosotros</a>
-          <a href="/oportunidades" className="hover:text-yellow-400">Oportunidades</a>
-          <a href="/inversionistas" className="hover:text-yellow-400">Inversionistas</a>
-          <a href="/contacto" className="hover:text-yellow-400">Contacto</a>
+        </Link>
+        <nav aria-label="Navegación principal" className="hidden items-center gap-5 xl:flex">
+          {links.map(navItem)}
+        </nav>
+        <div className="hidden min-w-0 shrink-0 items-center gap-3 xl:flex">
+          {signedIn ? (
+            <>
+              <Link href="/dashboard" className="text-[13px] font-semibold text-[#cbd5e1] hover:text-[#facc15]">Mi panel</Link>
+              <Link href="/perfil" title={name || "Mi perfil"}
+                className="max-w-40 truncate rounded-lg border border-[#facc15]/35 px-3 py-2.5 text-[13px] font-semibold text-white hover:border-[#facc15]">
+                {name || "Mi perfil"}
+              </Link>
+              <button type="button" onClick={signOut} className="text-[13px] text-slate-400 hover:text-[#facc15]">Salir</button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="px-1 text-[13px] font-semibold text-[#cbd5e1] hover:text-[#facc15]">Iniciar sesión</Link>
+              <Link href="/registro" className="dc-btn dc-btn-primary">Registrarse</Link>
+            </>
+          )}
         </div>
-
-        {!userName ? (
-          <div className="flex items-center gap-4">
-            <a href="/login" className="text-slate-300 hover:text-yellow-400">
-              Iniciar sesión
-            </a>
-
-            <a
-              href="/registro"
-              className="bg-yellow-500 text-black px-4 py-2 rounded-lg font-bold hover:bg-yellow-400"
-            >
-              Registrarse
-            </a>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4">
-            <a href="/perfil" className="hidden sm:flex items-center gap-3">
-              {fotoUrl ? (
-                <img
-                  src={fotoUrl}
-                  alt="Perfil"
-                  className="w-10 h-10 rounded-full object-cover border-2 border-yellow-500"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-yellow-500 text-black flex items-center justify-center font-bold">
-                  {userName.charAt(0).toUpperCase()}
-                </div>
-              )}
-
-              <span className="text-white font-bold max-w-[150px] truncate">
-                {userName}
-              </span>
-            </a>
-
-            <button
-              onClick={() => setOpen(!open)}
-              className="text-white text-3xl"
-              aria-label="Abrir menú"
-            >
-              {open ? "×" : "☰"}
-            </button>
-          </div>
-        )}
+        <button type="button" aria-expanded={menuOpen} aria-controls="dealcapital-mobile-nav"
+          aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"} onClick={()=>setMenuOpen(v=>!v)}
+          className="grid size-11 shrink-0 place-items-center rounded-lg border border-slate-700 text-2xl text-white xl:hidden">
+          {menuOpen ? (
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M5 5 19 19M19 5 5 19"/></svg>
+          ) : (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 7h16M9 12h11M4 17h16"/></svg>
+          )}
+        </button>
       </div>
-
-      {userName && open && (
-        <div className="absolute right-4 top-[76px] w-72 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-5 z-50">
-          <div className="flex flex-col gap-4 text-slate-200 font-medium">
-            <a href="/dashboard" className="hover:text-yellow-400">Dashboard</a>
-            <a href="/inversiones" className="hover:text-yellow-400">Mis inversiones</a>
-            <a href="/mensajes" className="hover:text-yellow-400">Mensajes</a>
-            <a href="/notificaciones" className="hover:text-yellow-400">Notificaciones</a>
-            <a href="/compromisos" className="hover:text-yellow-400">Compromisos</a>
-            <a href="/favoritos" className="hover:text-yellow-400">Favoritos</a>
-            <a href="/analitica" className="hover:text-yellow-400">Analítica</a>
-            <a href="/perfil" className="hover:text-yellow-400">Mi perfil</a>
-
-            <hr className="border-slate-700" />
-
-            <button
-              onClick={cerrarSesion}
-              className="text-left text-red-400 font-bold"
-            >
-              Cerrar sesión
-            </button>
+      {menuOpen && (
+        <nav id="dealcapital-mobile-nav" aria-label="Menú móvil" className="dc-container flex flex-col gap-5 border-t border-slate-700/70 py-6 xl:hidden">
+          {links.map(navItem)}
+          <Link href="/verificacion" className="text-[13px] font-semibold text-[#cbd5e1] hover:text-[#facc15]">Confianza y verificación</Link>
+          <div className="flex flex-wrap items-center gap-3 border-t border-slate-700/70 pt-5">
+            {signedIn ? (
+              <>
+                <Link href="/dashboard" className="dc-btn dc-btn-outline">Mi panel</Link>
+                <Link href="/perfil" className="dc-btn dc-btn-outline">Mi perfil</Link>
+                <button type="button" onClick={signOut} className="text-sm text-rose-300">Cerrar sesión</button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="dc-btn dc-btn-outline">Iniciar sesión</Link>
+                <Link href="/registro" className="dc-btn dc-btn-primary">Registrarse</Link>
+              </>
+            )}
           </div>
-        </div>
+        </nav>
       )}
-    </nav>
+    </header>
   );
 }

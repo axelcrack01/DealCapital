@@ -1,36 +1,38 @@
-# DealCapital · Activación de administración confiable
+# DealCapital — Activación de administración confiable
 
-**Estado 2026-11-02:** migración 20261102203429 ya aplicada a Supabase de producción. La rama de aplicación está en Preview; no publicar en main hasta provisionar y probar una cuenta administrativa verificada.
+**Estado: 2 de noviembre de 2026.** La migración `20261102203429_dealcapital_trusted_admin_review_audit` se encuentra aplicada a Supabase de producción. La interfaz Admin v3 está en una rama de Vercel Preview.
 
-## Lo que está instalado
-- Función \`public.dc_admin_review_project(bigint,boolean,text)\`: permite publicar o retirar un proyecto; exige justificación de 20 a 1000 caracteres.
-- Comprueba la autenticación mediante \`auth.uid()\` y consulta el rol más reciente en \`auth.users.raw_app_meta_data.role\` dentro de una función de privilegios acotados. No confía en \`profiles.rol\`.
-- Bloquea la fila de proyecto durante la revisión y rechaza decisiones redundantes; cambios y auditoría se guardan en la misma transacción.
-- \`dealcapital_private.project_review_audit\`: guarda actor, proyecto, fecha, motivo y estado anterior/nuevo. Schema privado, sin permisos directos de usuarios web ni acceso público.
-- \`public.dc_admin_review_history(integer)\`: solo administradores confiables pueden consultar los últimos eventos (máximo 100).
-- \`anon\` no puede ejecutar las funciones y los usuarios normales reciben \`42501\`.
-- No habilita verificación de identidad ni crediticia. Una publicación revisada no es un proyecto verificado financieramente.
+## Administrador autorizado
+- La cuenta del correo **axel.valladares.flores@gmail.com** fue indicada expresamente como único administrador.
+- Se confirmó en Supabase Auth que existía un único registro coincidente, con correo verificado, no bloqueado y asociado a un perfil con el rol heredado `admin`.
+- Se asignó `auth.users.raw_app_meta_data.role = 'admin'` con una actualización condicionada a todas las comprobaciones anteriores.
+- La consulta posterior confirmó **un solo administrador confiable** y que corresponde al correo indicado.
+- La actualización no afectó otras cuentas ni modificó sus perfiles.
+- El frontend comprueba `auth.getUser()` y renueva JWT si su sesión todavía contiene un rol anterior. Para evitar problemas por tokens viejos se recomienda cerrar e iniciar sesión otra vez.
+- Para futuras altas o revocaciones, utilizar preferentemente `auth.admin.updateUserById` desde un entorno de servidor autorizado y nunca exponer claves privilegiadas en el navegador.
 
-## Requisito de activación: identidad administrativa
-- **Cero** cuentas tenían \`auth.users.app_metadata.role=admin\` durante la revisión de 2026-11-02.
-- El campo heredado \`profiles.rol\` no sirve para identificar de forma confiable a un administrador; anteriormente era autoeditable.
-- Antes de conceder privilegios, la persona titular del negocio debe identificar explícitamente el correo de la cuenta y validar su titularidad. No promover automáticamente a nadie.
-- Un operador autorizado configura \`app_metadata.role='admin'\` mediante Supabase Auth Admin API \`updateUserById\` usando credenciales de backend seguras. No exponer la clave \`service_role\` ni crear un endpoint público de promoción.
-- Renovar el token de sesión, cerrar/abrir sesión y comprobar que \`getUser()\` devuelve \`app_metadata.role='admin'\`.
-- Probar consulta de proyectos y perfiles; revisar registro y retirada de publicación desde una cuenta de QA autorizada.
+## Implementación de backend
+- `public.dc_admin_review_project(bigint,boolean,text)`: verifica `auth.uid()` y el rol vigente directamente en `auth.users.raw_app_meta_data.role` antes de aprobar o retirar una publicación.
+- Requiere justificación de 20–1000 caracteres; bloquea la fila y registra el cambio junto con la auditoría en una única transacción.
+- `dealcapital_private.project_review_audit`: esquema privado con permisos de lectura directa revocados a roles web.
+- `public.dc_admin_review_history(integer)`: devuelve hasta 100 eventos únicamente a administradores confiables.
+- Ninguna función permite verificación de identidad, empresa, solvencia o historial SBS/RENIEC.
 
-## Pruebas realizadas sin persistencia
-- No-admin: RPC denegada.
-- Admin simulado solo durante transacción reversible: publicación y evento de auditoría coherentes; \`ROLLBACK\` realizado.
-- Datos reales sin alteraciones por QA. Sin administración concedida.
-- Queda pendiente E2E browser real para 3 roles (invitado, usuario, administrador).
+## Pruebas verificadas
+- Usuario normal: intento de aprobación rechazado.
+- Administrador simulado en transacción reversible: publicación y lectura de auditoría correctas, `ROLLBACK` sin cambios persistentes.
+- Falta ejecutar prueba E2E de navegador con sesión real y revisar que el panel muestre los 10 proyectos, los perfiles e interesados.
+- Los registros antiguos marcados como publicados deben revisarse manualmente; marca de publicación no equivale a certificación financiera.
 
-## Auditoría de Supabase
-Los asesores pueden advertir que las RPC \`SECURITY DEFINER\` son invocables por \`authenticated\`. Es intencional para permitir que un administrador con JWT actúe desde la aplicación; la función ejecuta una comprobación de rol en \`auth.users\` y deniega a otros usuarios. Revisar periódicamente este control y evitar introducir parámetros SQL dinámicos o variantes sin validación.
+## Seguridad pendiente
+- Los asesores de Supabase advierten de RPC `SECURITY DEFINER` ejecutables por `authenticated`. El endpoint debe permanecer protegido por comprobación estricta de rol; evaluar arquitectura con esquema privado para la siguiente versión.
+- Habilitar protección de contraseñas filtradas en Supabase Auth.
+- Probar flujos de revocación y sesiones ya abiertas.
+- Mantener verificaciones RENIEC/SBS deshabilitadas hasta tener autorización y controles adecuados.
 
 ## Despliegue
-1. Provisionar solo la cuenta administrativa validada.
-2. Realizar QA en Preview con esa cuenta.
-3. Fusionar la rama de administración en main.
-4. Verificar Vercel READY, navegación, lectura RLS, aprobación, auditoría y revocación.
-5. Confirmar que los dos proyectos históricamente marcados para publicación, con \`estado='pendiente'\`, son revisados manualmente; no inferir su legitimidad.
+1. Verificar que la única cuenta confiable sea la designada.
+2. Comprobar compilación Vercel de la rama.
+3. Publicar la interfaz en main y comprobar el dominio principal.
+4. Cerrar sesión y volver a iniciar sesión en producción con el administrador.
+5. Validar las lecturas de RLS y realizar una aprobación real solamente sobre un proyecto revisado formalmente.

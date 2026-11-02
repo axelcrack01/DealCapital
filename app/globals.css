@@ -950,10 +950,7 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 .dc-unified .dc-journey-heading h2 {
   font-size:clamp(31px,3.4vw,44px);line-height:1.18;letter-spacing:-.052em;
 }
-.dc-unified .dc-journey-heading h2::after {content:" Un punto de encuentro.";color:#facc15;}
-.dc-unified .dc-journey-heading h2 {font-size:0;}
-.dc-unified .dc-journey-heading h2::before {content:"Dos perfiles.";font-size:clamp(31px,3.4vw,44px);color:white;}
-.dc-unified .dc-journey-heading h2::after {font-size:clamp(31px,3.4vw,44px);}
+.dc-unified .dc-journey-heading h2 em {font-style:normal;color:#facc15;}
 .dc-up-journey-wrapper .dc-journey-heading {margin-bottom:29px;}
 .dc-up-journey-wrapper .dc-journey-panel {
   grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);
@@ -1041,6 +1038,7 @@ a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
  .dc-up-catalog-copy {max-width:670px;}
 }
 @media(max-width:740px) {
+ .dc-up-journey-wrapper .dc-journey-panel {grid-template-columns:1fr;}
  .dc-up-shortcut-grid {grid-template-columns:1fr;}
  .dc-up-shortcut,.dc-up-shortcut:first-child {min-height:83px;padding:17px 4px;border-right:0;border-bottom:1px solid rgba(2,8,23,.2);}
  .dc-up-shortcut:last-child {border-bottom:0;}

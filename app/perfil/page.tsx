@@ -174,13 +174,13 @@ export default function Perfil() {
                 <div className="flex flex-wrap gap-3 mt-4">
                   {perfil.perfil_verificado && (
                     <span className="bg-green-600 px-3 py-1 rounded-full text-sm">
-                      ✅ Perfil verificado
+                      Marca interna de perfil · pendiente de revalidación
                     </span>
                   )}
 
                   {perfil.empresa_verificada && (
                     <span className="bg-blue-600 px-3 py-1 rounded-full text-sm">
-                      ✅ Empresa verificada
+                      Marca interna de empresa · pendiente de revalidación
                     </span>
                   )}
                 </div>

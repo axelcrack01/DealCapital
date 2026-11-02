@@ -108,20 +108,20 @@ export default function PublicarProyecto() {
 
     if (error) {
       alert(JSON.stringify(error, null, 2));
-      setMensaje("Error al publicar el proyecto.");
+      setMensaje("No se pudo enviar el proyecto a revisión.");
       return;
     }
 
-    setMensaje("Proyecto publicado correctamente.");
+    setMensaje("Proyecto recibido. Queda pendiente de revisión antes de mostrarse públicamente.");
   };
 
   return (
     <main className="min-h-screen bg-slate-950 text-white px-6 py-20">
       <section className="max-w-4xl mx-auto">
-        <h1 className="text-5xl font-bold mb-4">Publicar Proyecto</h1>
+        <h1 className="text-5xl font-bold mb-4">Presentar proyecto</h1>
 
         <p className="text-slate-300 mb-10">
-          Presenta tu proyecto de forma clara para atraer inversionistas.
+          Completa tu propuesta para solicitar su revisión. La publicación pública no es automática y no equivale a una verificación financiera.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -219,7 +219,7 @@ export default function PublicarProyecto() {
           </div>
 
           <button className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-xl font-bold transition">
-            Publicar Proyecto
+            Enviar proyecto a revisión
           </button>
         </form>
 

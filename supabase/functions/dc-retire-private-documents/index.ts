@@ -94,8 +94,8 @@ Deno.serve(async (request: Request) => {
           ]);
           const privateBucket = !configResult.error &&
             configResult.data?.public === false;
-          const pdfOnly = configResult.data?.allowed_mime_types?.includes("application/pdf") === true &&
-            configResult.data.allowed_mime_types.length === 1;
+          const mimeTypes = configResult.data?.allowed_mime_types ?? [];
+          const pdfOnly = mimeTypes.length === 1 && mimeTypes.includes("application/pdf");
           const accessible = !listResult.error;
           return {
             bucket,

@@ -29,7 +29,7 @@ export default function Dashboard() {
       if (profile?.tipo_usuario === "emprendedor") {
         const { data: misProyectos } = await supabase
           .from("proyectos")
-          .select("*")
+          .select("id,nombre_proyecto,descripcion,industria,capital_requerido,monto_recaudado,proyecto_verificado,created_at,estado,riesgo,imagen_url,user_id")
           .eq("user_id", data.user.id);
 
         setProyectos(misProyectos || []);
@@ -55,7 +55,7 @@ export default function Dashboard() {
       if (profile?.tipo_usuario === "inversionista") {
         const { data: todosProyectos } = await supabase
           .from("proyectos")
-          .select("*")
+          .select("id,nombre_proyecto,descripcion,industria,capital_requerido,monto_recaudado,proyecto_verificado,created_at,estado,riesgo,imagen_url,user_id")
           .order("created_at", { ascending: false });
 
         const sectores = (profile.sectores_interes || "")

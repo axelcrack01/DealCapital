@@ -104,11 +104,15 @@ export default async function DetalleProyecto({
                 )}
 
                 {proyecto.pitch_deck_url && (
-                  <FileButton href={proyecto.pitch_deck_url} label="📊 Pitch Deck" />
+                  /^https?:\/\//i.test(proyecto.pitch_deck_url)
+                    ? <FileButton href={proyecto.pitch_deck_url} label="📊 Pitch Deck" />
+                    : <p className="text-xs leading-6 text-slate-400">El pitch deck está almacenado de forma privada.</p>
                 )}
 
                 {proyecto.documento_pdf && (
-                  <FileButton href={proyecto.documento_pdf} label="📄 Documento PDF" />
+                  /^https?:\/\//i.test(proyecto.documento_pdf)
+                    ? <FileButton href={proyecto.documento_pdf} label="📄 Documento PDF" />
+                    : <p className="text-xs leading-6 text-slate-400">Los documentos adicionales son de acceso restringido.</p>
                 )}
 
                 {!proyecto.video_pitch &&

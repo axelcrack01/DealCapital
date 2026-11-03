@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [interesados, setInteresados] = useState<any[]>([]);
   const [compromisos, setCompromisos] = useState<any[]>([]);
   const [rejections,setRejections]=useState<Array<{project_id:number;project_title:string;category:string;explanation:string;delete_after:string;purged_at:string|null}>>([]);
+  const [retentionHolds,setRetentionHolds]=useState<Record<number,boolean>>({});
 
   useEffect(() => {
     const cargarDashboard = async () => {
@@ -28,8 +29,16 @@ export default function Dashboard() {
       setPerfil(profile);
 
       if (profile?.tipo_usuario === "emprendedor") {
-        const {data:myRejections}=await supabase.rpc("dc_my_rejected_projects");
-        setRejections((myRejections||[]) as typeof rejections);
+        const [rejectionResult,holdResult]=await Promise.all([
+          supabase.rpc("dc_my_rejected_projects"),
+          supabase.rpc("dc_my_retention_holds")
+        ]);
+        setRejections((rejectionResult.data||[]) as typeof rejections);
+        const holds:Record<number,boolean>={};
+        for(const row of (holdResult.data||[]) as Array<{project_id:number;retention_hold:boolean}>){
+          holds[row.project_id]=row.retention_hold;
+        }
+        setRetentionHolds(holds);
         const { data: misProyectos } = await supabase
           .from("proyectos")
           .select("id,nombre_proyecto,descripcion,industria,capital_requerido,monto_recaudado,proyecto_verificado,created_at,estado,riesgo,imagen_url,user_id")
@@ -137,7 +146,7 @@ export default function Dashboard() {
               {rejections.map(r=><article key={r.project_id} className="rounded-xl border border-rose-800/50 p-4">
                 <h3 className="font-bold">{r.project_title} <small className="text-rose-200">#{r.project_id}</small></h3>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-200">{r.explanation}</p>
-                <p className="mt-2 text-xs text-rose-200">{r.purged_at?"Contenido eliminado":"Eliminación prevista a partir de "+new Intl.DateTimeFormat("es-PE",{dateStyle:"medium",timeZone:"America/Lima"}).format(new Date(r.delete_after))}</p>
+                <p className="mt-2 text-xs text-rose-200">{r.purged_at?"Contenido eliminado":retentionHolds[r.project_id]?"Eliminación suspendida por una medida de conservación": "Eliminación prevista a partir de "+new Intl.DateTimeFormat("es-PE",{dateStyle:"medium",timeZone:"America/Lima"}).format(new Date(r.delete_after))}</p>
               </article>)}
             </section>}
             <h2 className="text-3xl font-bold mb-6">Mis proyectos</h2>

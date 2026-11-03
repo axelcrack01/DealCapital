@@ -125,6 +125,7 @@ BEGIN
     END IF;
     IF NEW.estado IS DISTINCT FROM OLD.estado THEN
       IF OLD.estado IS DISTINCT FROM 'pendiente'
+         OR NEW.estado IS NULL
          OR NEW.estado NOT IN ('aceptado','rechazado') THEN
         RAISE EXCEPTION 'Invalid commitment transition' USING ERRCODE='42501';
       END IF;

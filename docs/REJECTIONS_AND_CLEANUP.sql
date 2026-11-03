@@ -211,14 +211,14 @@ BEGIN
    +(SELECT count(*) FROM public.favoritos f WHERE f.proyecto_id=r.project_id)
    +(SELECT count(*) FROM dealcapital_private.project_review_audit a WHERE a.project_id=r.project_id)
    AS dependencies,
-   (p.documento_pdf IS NOT NULL OR p.pitch_deck_url IS NOT NULL
-    OR p.documentos_url IS NOT NULL OR p.logo_url IS NOT NULL
-    OR p.imagen_url IS NOT NULL) AS has_files,
+   (nullif(btrim(p.documento_pdf),'') IS NOT NULL OR nullif(btrim(p.pitch_deck_url),'') IS NOT NULL
+    OR nullif(btrim(p.documentos_url),'') IS NOT NULL OR nullif(btrim(p.logo_url),'') IS NOT NULL
+    OR nullif(btrim(p.imagen_url),'') IS NOT NULL) AS has_files,
    (p.id IS NOT NULL
     AND p.estado='rechazado'
     AND p.proyecto_verificado IS NOT TRUE
-    AND p.documento_pdf IS NULL AND p.pitch_deck_url IS NULL
-    AND p.documentos_url IS NULL AND p.logo_url IS NULL AND p.imagen_url IS NULL
+    AND nullif(btrim(p.documento_pdf),'') IS NULL AND nullif(btrim(p.pitch_deck_url),'') IS NULL
+    AND nullif(btrim(p.documentos_url),'') IS NULL AND nullif(btrim(p.logo_url),'') IS NULL AND nullif(btrim(p.imagen_url),'') IS NULL
     AND NOT EXISTS(SELECT 1 FROM public.interesados i WHERE i.proyecto_id=r.project_id)
     AND NOT EXISTS(SELECT 1 FROM public.conversaciones c WHERE c.proyecto_id=r.project_id)
     AND NOT EXISTS(SELECT 1 FROM public.compromisos c WHERE c.proyecto_id=r.project_id)
@@ -267,11 +267,11 @@ BEGIN
    WHERE p.id=r.project_id
      AND p.estado='rechazado'
      AND p.proyecto_verificado IS NOT TRUE
-     AND p.documento_pdf IS NULL
-     AND p.pitch_deck_url IS NULL
-     AND p.documentos_url IS NULL
-     AND p.logo_url IS NULL
-     AND p.imagen_url IS NULL
+     AND nullif(btrim(p.documento_pdf),'') IS NULL
+     AND nullif(btrim(p.pitch_deck_url),'') IS NULL
+     AND nullif(btrim(p.documentos_url),'') IS NULL
+     AND nullif(btrim(p.logo_url),'') IS NULL
+     AND nullif(btrim(p.imagen_url),'') IS NULL
      AND NOT EXISTS(SELECT 1 FROM public.interesados i WHERE i.proyecto_id=p.id)
      AND NOT EXISTS(SELECT 1 FROM public.conversaciones c WHERE c.proyecto_id=p.id)
      AND NOT EXISTS(SELECT 1 FROM public.compromisos c WHERE c.proyecto_id=p.id)
@@ -321,3 +321,79 @@ CREATE TRIGGER dc_block_rapid_duplicate_projects BEFORE INSERT ON public.proyect
 FOR EACH ROW EXECUTE FUNCTION dealcapital_private.dc_block_rapid_duplicate_projects();
 REVOKE ALL ON FUNCTION dealcapital_private.dc_block_rapid_duplicate_projects()
 FROM PUBLIC,anon,authenticated;
+
+-- Prevent administrative approval from bypassing the active rejection queue.
+CREATE OR REPLACE FUNCTION public.dc_admin_review_project(
+  p_project_id bigint,
+  p_publish boolean,
+  p_reason text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog
+AS $$
+DECLARE
+  v_actor uuid;
+  v_old_published boolean;
+  v_old_status text;
+  v_new_status text;
+  v_audit_id bigint;
+BEGIN
+  v_actor := (SELECT auth.uid());
+  IF v_actor IS NULL OR NOT EXISTS (
+    SELECT 1 FROM auth.users u
+     WHERE u.id = v_actor
+       AND u.raw_app_meta_data ->> 'role' = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Administrative review is not authorized'
+      USING ERRCODE = '42501';
+  END IF;
+
+  IF p_project_id IS NULL OR p_publish IS NULL
+     OR char_length(btrim(coalesce(p_reason,''))) NOT BETWEEN 20 AND 1000 THEN
+    RAISE EXCEPTION 'Invalid review parameters; provide a reason (20–1000 characters)'
+      USING ERRCODE = '22023';
+  END IF;
+
+  SELECT p.proyecto_verificado, p.estado
+    INTO v_old_published, v_old_status
+    FROM public.proyectos p
+   WHERE p.id = p_project_id
+   FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Project not found' USING ERRCODE = 'P0002';
+  END IF;
+  -- Rejected proposals can only return through the audited restore flow.
+  IF v_old_status = 'rechazado' THEN
+    RAISE EXCEPTION 'A rejected proposal must be restored before approval'
+      USING ERRCODE = '42501';
+  END IF;
+  IF coalesce(v_old_published,false) = p_publish THEN
+    RAISE EXCEPTION 'Project already has this publication state'
+      USING ERRCODE = '22023';
+  END IF;
+
+  v_new_status := CASE WHEN p_publish THEN 'publicado' ELSE 'pendiente' END;
+
+  UPDATE public.proyectos
+     SET proyecto_verificado = p_publish, estado = v_new_status
+   WHERE id = p_project_id;
+
+  INSERT INTO dealcapital_private.project_review_audit(
+    project_id, actor_id, old_published, new_published,
+    old_status, new_status, reason
+  ) VALUES (
+    p_project_id, v_actor, v_old_published, p_publish,
+    v_old_status, v_new_status, btrim(p_reason)
+  ) RETURNING id INTO v_audit_id;
+
+  RETURN pg_catalog.jsonb_build_object(
+    'project_id', p_project_id,
+    'published', p_publish,
+    'status', v_new_status,
+    'audit_id', v_audit_id
+  );
+END;
+$$;

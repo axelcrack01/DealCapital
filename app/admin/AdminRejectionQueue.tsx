@@ -2,6 +2,7 @@
 
 import {useEffect,useState,type FormEvent} from "react";
 import {supabase} from "../../lib/supabase";
+import AdminRetentionControls,{type HoldState} from "./AdminRetentionControls";
 
 type Rejection={
  project_id:number;project_title:string;category:string;explanation:string;
@@ -20,6 +21,7 @@ export default function AdminRejectionQueue({refreshToken,onReviewed}:{
  refreshToken:number;onReviewed:()=>void
 }){
  const [records,setRecords]=useState<Rejection[]>([]);
+ const [holds,setHolds]=useState<Record<number,HoldState>>({});
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState<string|null>(null);
  const [restoring,setRestoring]=useState<number|null>(null);
@@ -30,10 +32,21 @@ export default function AdminRejectionQueue({refreshToken,onReviewed}:{
    let active=true;
    const load=async()=>{
      setLoading(true);
-     const {data,error:rpcError}=await supabase.rpc("dc_admin_rejection_queue",{p_limit:100});
+     const [queueResult,holdResult]=await Promise.all([
+       supabase.rpc("dc_admin_rejection_queue",{p_limit:100}),
+       supabase.rpc("dc_admin_retention_holds")
+     ]);
      if(!active)return;
-     if(rpcError){setError("No se pudo consultar la cola de rechazos.");setRecords([]);}
-     else{setError(null);setRecords((data||[]) as Rejection[]);}
+     if(queueResult.error||holdResult.error){
+       setError("No se pudo consultar la cola de rechazos y sus bloqueos de conservación.");
+       setRecords([]);setHolds({});
+     }else{
+       const mapped:Record<number,HoldState>={};
+       for(const hold of (holdResult.data||[]) as HoldState[])mapped[hold.project_id]=hold;
+       setHolds(mapped);
+       setError(null);
+       setRecords((queueResult.data||[]) as Rejection[]);
+     }
      setLoading(false);
    };
    void load();
@@ -62,8 +75,8 @@ export default function AdminRejectionQueue({refreshToken,onReviewed}:{
        <p className="text-[11px] font-bold uppercase tracking-widest text-[#facc15]">Trazabilidad</p>
        <h3 id="dc-rejections-title" className="mt-2 text-xl font-bold">Rechazos y eliminación programada</h3>
        <p className="mt-2 text-xs leading-6 text-[#b2c4d9]">
-         El plazo es de siete días. El proceso automático solo purga proyectos sin actividad,
-         auditorías previas ni archivos asociados. Los motivos quedan registrados para revisión.
+         El plazo es de siete días. Puedes suspender la eliminación por motivos de conservación.
+         La purga exige ausencia de actividad, auditorías previas, archivos y bloqueos activos. Cada decisión queda registrada.
        </p>
      </div>
      <span className="rounded-full border border-[#405778] px-3 py-2 text-xs text-[#d1deee]">
@@ -78,12 +91,14 @@ export default function AdminRejectionQueue({refreshToken,onReviewed}:{
         const expired=new Date(r.delete_after).getTime()<=Date.now();
         const archived=!!r.purged_at;
         const blocked=r.dependencies>0||r.has_files;
+        const hold=holds[r.project_id];
+        const preserved=hold?.retention_hold===true;
         return <article key={r.project_id} className="rounded-xl border border-[#334760] bg-[#10213a] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <strong className="text-sm">{r.project_title} <span className="text-[#9fb2c9]">#{r.project_id}</span></strong>
             <span className={"rounded-full border px-2.5 py-1 text-[11px] font-bold "+
-              (archived?"border-slate-500 text-slate-300":blocked?"border-amber-500 text-amber-200":"border-rose-500/70 text-rose-200")}>
-              {archived?"Contenido eliminado":blocked?"Retenido por dependencias":expired?"Eliminación pendiente":"Eliminación programada"}
+              (archived?"border-slate-500 text-slate-300":preserved?"border-amber-500 text-amber-200":blocked?"border-amber-500 text-amber-200":"border-rose-500/70 text-rose-200")}>
+              {archived?"Contenido eliminado":preserved?"Conservación activa":blocked?"Retenido por dependencias":expired?"Eliminación pendiente":"Eliminación programada"}
             </span>
           </div>
           <p className="mt-2 text-xs font-bold text-[#f9d3d8]">{categoryLabel[r.category]||r.category}</p>
@@ -92,10 +107,11 @@ export default function AdminRejectionQueue({refreshToken,onReviewed}:{
             Rechazado: {fmt(r.rejected_at)} · Eliminación a partir de: {fmt(r.delete_after)}
             {r.purged_at?" · Eliminado: "+fmt(r.purged_at):""}
           </p>
-          {blocked&&!archived&&<p className="mt-2 text-[11px] leading-5 text-amber-200">
+          {blocked&&!archived&&!preserved&&<p className="mt-2 text-[11px] leading-5 text-amber-200">
             La eliminación queda bloqueada por {r.dependencies} relaciones históricas
             {r.has_files?" y archivos asociados":""}. No se borrarán automáticamente esas evidencias.
           </p>}
+          {!archived&&<AdminRetentionControls projectId={r.project_id} hold={hold} deadlineReached={expired} hasFiles={r.has_files} dependencies={r.dependencies} onUpdated={onReviewed}/>}
           {!archived&&<div className="mt-3">
             {restoring===r.project_id?<form onSubmit={restore} className="max-w-lg space-y-3">
               <label className="block text-xs font-bold">Justificación para anular el rechazo

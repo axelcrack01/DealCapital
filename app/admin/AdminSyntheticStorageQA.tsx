@@ -95,7 +95,7 @@ export default function AdminSyntheticStorageQA(){
    </p>
    <div className="mt-4 flex flex-wrap items-start gap-4">
      <label className="flex max-w-lg items-start gap-2 text-xs leading-5 text-[#d6e1ed]">
-       <input type="checkbox" checked={confirmed} onChange={setConfirmed}
+       <input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}
          className="mt-1 accent-[#facc15]"/>
        Autorizo crear y retirar únicamente el archivo sintético de QA. No se realizará
        ninguna eliminación de documentos comerciales.

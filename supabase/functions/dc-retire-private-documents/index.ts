@@ -57,10 +57,16 @@ Deno.serve(async (request: Request) => {
 
   try {
     const input = await request.json();
-    if (
-      !input || typeof input !== "object" || Array.isArray(input) ||
-      !Number.isSafeInteger(input.project_id) || input.project_id <= 0
-    ) return reply({ error: "Invalid project id" }, 400, origin);
+    if (!input || typeof input !== "object" || Array.isArray(input)) {
+      return reply({ error: "Invalid request" }, 400, origin);
+    }
+    // A safe, read-only diagnostic can be run with a real admin session.
+    // The retirement path remains a separate explicit operation.
+    const isDiagnostic = input.mode === "diagnostic";
+    if (!isDiagnostic &&
+      (input.mode !== undefined && input.mode !== "retire" ||
+       !Number.isSafeInteger(input.project_id) || input.project_id <= 0)
+    ) return reply({ error: "Invalid project id or operation" }, 400, origin);
 
     const userClient = createClient(url, anonKey, {
       auth: { persistSession: false, autoRefreshToken: false }
@@ -75,6 +81,41 @@ Deno.serve(async (request: Request) => {
       await adminClient.auth.admin.getUserById(session.user.id);
     if (trustedError || trusted.user?.app_metadata?.role !== "admin") {
       return reply({ error: "Administrative access denied" }, 403, origin);
+    }
+
+    if (isDiagnostic) {
+      // A pure connectivity and configuration check: no record is created,
+      // no object is listed by name to the client and nothing is removed.
+      const checks = await Promise.all(
+        (["Documentos", "pitch-decks"] as const).map(async bucket => {
+          const [configResult, listResult] = await Promise.all([
+            adminClient.storage.getBucket(bucket),
+            adminClient.storage.from(bucket).list("", { limit: 1 })
+          ]);
+          const privateBucket = !configResult.error &&
+            configResult.data?.public === false;
+          const mimeTypes = configResult.data?.allowed_mime_types ?? [];
+          const pdfOnly = mimeTypes.length === 1 && mimeTypes.includes("application/pdf");
+          const accessible = !listResult.error;
+          return {
+            bucket,
+            private: privateBucket,
+            pdf_only: pdfOnly,
+            service_access: accessible,
+            passed: privateBucket && pdfOnly && accessible
+          };
+        })
+      );
+      const ready = checks.every(check => check.passed);
+      return reply({
+        status: ready ? "ready" : "storage_configuration_issue",
+        auth_verified: true,
+        trusted_admin_verified: true,
+        private_storage_ready: ready,
+        checks,
+        destructive_test_performed: false,
+        note: "No se han subido ni eliminado archivos. Esta prueba no certifica la retirada física de un PDF real."
+      }, ready ? 200 : 503, origin);
     }
 
     const { data: planData, error: planError } =

@@ -14,7 +14,7 @@ export default async function DetalleProyecto({
 
   const { data: proyecto } = await supabase
     .from("proyectos")
-    .select("*")
+    .select("id,nombre_proyecto,industria,imagen_url,logo_url,proyecto_verificado,riesgo,roi_estimado,descripcion,equipo_fundador,proyecciones,riesgos,video_pitch,capital_requerido,retorno_ofrecido,plazo")
     .eq("id", id)
     .eq("proyecto_verificado", true)
     .single();
@@ -103,25 +103,12 @@ export default async function DetalleProyecto({
                   <FileButton href={proyecto.video_pitch} label="🎥 Video pitch" />
                 )}
 
-                {proyecto.pitch_deck_url && (
-                  /^https?:\/\//i.test(proyecto.pitch_deck_url)
-                    ? <FileButton href={proyecto.pitch_deck_url} label="📊 Pitch Deck" />
-                    : <p className="text-xs leading-6 text-slate-400">El pitch deck está almacenado de forma privada.</p>
+                {!proyecto.video_pitch && (
+                  <p className="text-slate-400">No hay recursos de video públicos en este proyecto.</p>
                 )}
-
-                {proyecto.documento_pdf && (
-                  /^https?:\/\//i.test(proyecto.documento_pdf)
-                    ? <FileButton href={proyecto.documento_pdf} label="📄 Documento PDF" />
-                    : <p className="text-xs leading-6 text-slate-400">Los documentos adicionales son de acceso restringido.</p>
-                )}
-
-                {!proyecto.video_pitch &&
-                  !proyecto.pitch_deck_url &&
-                  !proyecto.documento_pdf && (
-                    <p className="text-slate-400">
-                      Este proyecto aún no tiene archivos adjuntos.
-                    </p>
-                  )}
+                <p className="w-full text-xs leading-6 text-slate-400">
+                  Los PDF y documentos de evaluación permanecen privados y no se distribuyen en el catálogo.
+                </p>
               </div>
             </div>
           </div>

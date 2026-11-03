@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
 export default function PublicarProyecto() {
@@ -26,6 +26,9 @@ export default function PublicarProyecto() {
   });
 
   const [mensaje, setMensaje] = useState("");
+  const [sending,setSending]=useState(false);
+  const [submitted,setSubmitted]=useState(false);
+  const submissionLock=useRef(false);
   const [privatePreviews, setPrivatePreviews] = useState<{ documento_pdf?: string; pitch_deck_url?: string }>({});
 
 
@@ -107,6 +110,10 @@ export default function PublicarProyecto() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if(submissionLock.current||submitted)return;
+    submissionLock.current=true;
+    setSending(true);
+    try {
 
     const { data } = await supabase.auth.getUser();
 
@@ -123,13 +130,20 @@ export default function PublicarProyecto() {
       },
     ]);
 
-    if (error) {
-      alert(JSON.stringify(error, null, 2));
-      setMensaje("No se pudo enviar el proyecto a revisión.");
+    if(error){
+      setMensaje(error.code==="23505"
+        ?"Ya existe una propuesta activa con el mismo nombre, propietario y monto. Revisa tus proyectos antes de crear otra."
+        :"No se pudo enviar el proyecto a revisión. Comprueba los datos e intenta nuevamente.");
       return;
     }
-
-    setMensaje("Proyecto recibido. Queda pendiente de revisión antes de mostrarse públicamente.");
+    setSubmitted(true);
+    setMensaje("Proyecto recibido correctamente. Queda pendiente de revisión antes de mostrarse públicamente.");
+    } catch {
+      setMensaje("No se pudo completar el envío. Vuelve a intentarlo.");
+    } finally {
+      submissionLock.current=false;
+      setSending(false);
+    }
   };
 
   return (
@@ -238,12 +252,12 @@ export default function PublicarProyecto() {
             {privatePreviews.documento_pdf && <a href={privatePreviews.documento_pdf} target="_blank" rel="noopener noreferrer" className="block text-yellow-400 underline">Vista previa privada (10 minutos)</a>}
           </div>
 
-          <button className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-xl font-bold transition">
-            Enviar proyecto a revisión
+          <button disabled={sending||submitted} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-xl font-bold transition disabled:opacity-50 disabled:cursor-not-allowed">
+            {submitted?"Propuesta recibida":sending?"Enviando propuesta…":"Enviar proyecto a revisión"}
           </button>
         </form>
 
-        {mensaje && <p className="mt-6 text-yellow-400">{mensaje}</p>}
+        {mensaje && <p role="status" className="mt-6 text-yellow-400">{mensaje}</p>}
       </section>
     </main>
   );

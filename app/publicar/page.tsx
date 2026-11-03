@@ -132,7 +132,7 @@ export default function PublicarProyecto() {
 
     if(error){
       setMensaje(error.code==="23505"
-        ?"Ya existe una propuesta con el mismo nombre y monto enviada recientemente. Revisa el dashboard antes de intentar otra vez."
+        ?"Ya existe una propuesta activa con el mismo nombre, propietario y monto. Revisa tus proyectos antes de crear otra."
         :"No se pudo enviar el proyecto a revisión. Comprueba los datos e intenta nuevamente.");
       return;
     }

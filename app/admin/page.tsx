@@ -7,8 +7,9 @@ import {supabase} from "../../lib/supabase";
 import BrandIcon from "../components/BrandIcon";
 import AdminProjectReview from "./AdminProjectReview";
 import AdminReviewHistory from "./AdminReviewHistory";
+import AdminPrivateDocuments from "./AdminPrivateDocuments";
 
-type Project = {id:number;nombre_proyecto:string|null;emprendedor:string|null;industria:string|null;capital_requerido:number|null;proyecto_verificado:boolean|null;created_at:string|null};
+type Project = {id:number;nombre_proyecto:string|null;emprendedor:string|null;industria:string|null;capital_requerido:number|null;proyecto_verificado:boolean|null;estado:string|null;created_at:string|null;documento_pdf:string|null;pitch_deck_url:string|null};
 type User = {id:string;nombre:string|null;email:string|null;tipo_usuario:string|null;perfil_verificado:boolean|null;empresa_verificada:boolean|null;created_at:string|null};
 type Interest = {id:number;proyecto_id:number|null;nombre:string|null;email:string|null;mensaje:string|null;created_at:string|null};
 type Section = "resumen"|"proyectos"|"usuarios"|"interesados";
@@ -79,7 +80,7 @@ export default function Admin() {
         // Actual mutations are independently authorized by server-side RPC.
         setAccess("allowed");
         const [p,u,i]=await Promise.all([
-          supabase.from("proyectos").select("id,nombre_proyecto,emprendedor,industria,capital_requerido,proyecto_verificado,created_at").order("created_at",{ascending:false}).limit(200),
+          supabase.from("proyectos").select("id,nombre_proyecto,emprendedor,industria,capital_requerido,proyecto_verificado,estado,created_at,documento_pdf,pitch_deck_url").order("created_at",{ascending:false}).limit(200),
           supabase.from("profiles").select("id,nombre,email,tipo_usuario,perfil_verificado,empresa_verificada,created_at").order("created_at",{ascending:false}).limit(200),
           supabase.from("interesados").select("id,proyecto_id,nombre,email,mensaje,created_at").order("created_at",{ascending:false}).limit(200)
         ]);
@@ -104,7 +105,8 @@ export default function Admin() {
   const totals=useMemo(()=>({
     marked:projects.filter(p=>p.proyecto_verificado===true).length,
     unmarked:projects.filter(p=>p.proyecto_verificado!==true).length,
-    amount:projects.reduce((n,p)=>n+Number(p.capital_requerido||0),0)
+    amount:projects.reduce((n,p)=>n+Number(p.capital_requerido||0),0),
+    inconsistent:projects.filter(p=>p.proyecto_verificado===true && p.estado!=="publicado").length
   }),[projects]);
   const names=useMemo(()=>new Map(projects.map(p=>[p.id,p.nombre_proyecto||"Proyecto"])),[projects]);
   const rows=useMemo(()=>{
@@ -176,6 +178,9 @@ export default function Admin() {
             <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#35465e]"><div className="h-full rounded-full bg-[#facc15]" style={{width: projects.length?(100*totals.marked/projects.length)+"%":"0%"}}/></div>
             <div className="mt-4 flex flex-wrap justify-between gap-3 text-xs"><span className="text-[#facc15]">Con marca: {totals.marked}</span><span className={faint}>Sin marca: {totals.unmarked}</span></div>
             <p className={"mt-5 text-xs leading-6 "+faint}>Las marcas actuales de publicación no equivalen a una validación financiera.</p>
+            {totals.inconsistent>0 && <p role="note" className="mt-3 rounded-lg border border-amber-500/45 bg-amber-900/20 p-3 text-xs leading-5 text-amber-200">
+              {totals.inconsistent} {totals.inconsistent===1?"proyecto tiene":"proyectos tienen"} marca de publicación, pero su estado general sigue pendiente. Revisa estos registros históricos antes de tomar decisiones.
+            </p>}
             <button type="button" onClick={()=>switchTab("proyectos")} className="mt-5 inline-flex items-center gap-2 text-xs font-bold text-[#facc15]">Revisar registros <BrandIcon name="arrow" size={17}/></button>
           </section>
           <section className="rounded-2xl border border-[#334660] bg-[#0e2039] p-6">
@@ -214,7 +219,7 @@ export default function Admin() {
                   <><th className="p-4">Interesado</th><th className="p-4">Proyecto</th><th className="p-4">Fecha</th><th className="p-4">Mensaje</th></>}
                 </tr></thead>
                 <tbody className="divide-y divide-[#2c405d]">
-                  {tab==="proyectos"&&(rows as Project[]).map(p=><tr key={p.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{p.nombre_proyecto||"Proyecto"}</strong><small className={faint}>{p.industria||"Sin sector"} · {p.emprendedor||"Sin responsable"}</small></td><td className="p-4 font-bold">{money(Number(p.capital_requerido||0))}</td><td className="p-4">{date(p.created_at)}</td><td className="p-4"><span className={badge(!!p.proyecto_verificado)}>{p.proyecto_verificado?"Con marca":"Sin marca"}</span></td><td className="p-4"><AdminProjectReview projectId={p.id} published={!!p.proyecto_verificado} onReviewed={()=>setReload(v=>v+1)}/>{p.proyecto_verificado&&<Link href={"/oportunidades/"+p.id} className="mt-2 block text-[11px] font-bold text-[#facc15]">Ver publicación</Link>}</td></tr>)}
+                  {tab==="proyectos"&&(rows as Project[]).map(p=><tr key={p.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{p.nombre_proyecto||"Proyecto"}</strong><small className={faint}>{p.industria||"Sin sector"} · {p.emprendedor||"Sin responsable"}</small></td><td className="p-4 font-bold">{money(Number(p.capital_requerido||0))}</td><td className="p-4">{date(p.created_at)}</td><td className="p-4"><span className={badge(!!p.proyecto_verificado)}>{p.proyecto_verificado?"Visible":"No visible"}</span>{p.proyecto_verificado&&p.estado!=="publicado"&&<small className="mt-2 block text-amber-300">Estado heredado: {p.estado||"sin definir"}</small>}</td><td className="p-4"><AdminProjectReview projectId={p.id} published={!!p.proyecto_verificado} onReviewed={()=>setReload(v=>v+1)}/><AdminPrivateDocuments documentoPdf={p.documento_pdf} pitchDeck={p.pitch_deck_url}/>{p.proyecto_verificado&&<Link href={"/oportunidades/"+p.id} className="mt-2 block text-[11px] font-bold text-[#facc15]">Ver publicación</Link>}</td></tr>)}
                   {tab==="usuarios"&&(rows as User[]).map(u=><tr key={u.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{u.nombre||"Sin nombre"}</strong><small className={faint}>{u.email||"Correo no disponible"}</small></td><td className="p-4">{u.tipo_usuario||"No definido"}</td><td className="p-4">{date(u.created_at)}</td><td className="p-4"><span className={badge(!!u.perfil_verificado)}>{u.perfil_verificado?"Perfil marcado":"Sin marca"}</span><span className={"ml-1 "+badge(!!u.empresa_verificada)}>{u.empresa_verificada?"Empresa marcada":"Sin marca"}</span></td></tr>)}
                   {tab==="interesados"&&(rows as Interest[]).map(i=><tr key={i.id} className="hover:bg-[#15253e]"><td className="p-4"><strong className="block text-sm">{i.nombre||"Interesado"}</strong><small className={faint}>{i.email||"Sin correo"}</small></td><td className="p-4">{i.proyecto_id?names.get(i.proyecto_id)||"Proyecto #"+i.proyecto_id:"Sin asociar"}</td><td className="p-4">{date(i.created_at)}</td><td className="max-w-60 truncate p-4" title={i.mensaje||""}>{i.mensaje||"Sin mensaje"}</td></tr>)}
                 </tbody>

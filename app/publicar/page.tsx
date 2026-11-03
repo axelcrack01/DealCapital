@@ -26,6 +26,8 @@ export default function PublicarProyecto() {
   });
 
   const [mensaje, setMensaje] = useState("");
+  const [privatePreviews, setPrivatePreviews] = useState<{ documento_pdf?: string; pitch_deck_url?: string }>({});
+
 
   useEffect(() => {
     const verificarSesion = async () => {
@@ -68,24 +70,39 @@ export default function PublicarProyecto() {
       return;
     }
 
-    const fileName = `${data.user.id}-${Date.now()}-${file.name}`;
+    // Use an opaque object name: never store the original local filename,
+    // which may contain a person's name or other confidential details.
+    const isPrivate = bucket === "Documentos" || bucket === "pitch-decks";
+    const extension = file.type === "application/pdf" ? "pdf"
+      : file.type === "image/png" ? "png"
+      : file.type === "image/webp" ? "webp" : "jpg";
+    const fileName = `${data.user.id}-${crypto.randomUUID()}.${extension}`;
 
     const { error } = await supabase.storage
       .from(bucket)
-      .upload(fileName, file);
+      .upload(fileName, file, { contentType: file.type, upsert: false });
 
     if (error) {
-      alert(JSON.stringify(error, null, 2));
-      setMensaje("Error al subir archivo.");
+      setMensaje("Error al subir el archivo. Comprueba el tipo, tamaño y permisos de acceso.");
       return;
     }
 
-    const { data: publicUrl } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-
-    setForm((prev) => ({ ...prev, [campo]: publicUrl.publicUrl }));
-    setMensaje("Archivo subido correctamente.");
+    if (isPrivate) {
+      // Never place a signed URL into the projects table: it expires and
+      // would become public through the project row.
+      setForm((prev) => ({ ...prev, [campo]: fileName }));
+      const { data: signed, error: previewError } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(fileName, 600);
+      if (!previewError && signed?.signedUrl) {
+        setPrivatePreviews((prev) => ({ ...prev, [campo]: signed.signedUrl }));
+      }
+      setMensaje("Documento guardado de forma privada. Su acceso está restringido.");
+    } else {
+      const { data: publicUrl } = supabase.storage.from(bucket).getPublicUrl(fileName);
+      setForm((prev) => ({ ...prev, [campo]: publicUrl.publicUrl }));
+      setMensaje("Imagen subida correctamente.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -172,6 +189,7 @@ export default function PublicarProyecto() {
 
           <div className="bg-slate-900 p-8 rounded-2xl space-y-5">
             <h2 className="text-2xl font-bold">Archivos del proyecto</h2>
+            <p className="text-sm leading-6 text-slate-400">Las imágenes pueden mostrarse públicamente al aprobarse el proyecto. Los PDF permanecen privados y no se publican con la ficha de oportunidad.</p>
 
             <label className="block text-slate-300">Logo del proyecto</label>
             <input
@@ -204,18 +222,20 @@ export default function PublicarProyecto() {
               }
               className="w-full p-4 rounded-xl bg-slate-800"
             />
-            {form.pitch_deck_url && <a href={form.pitch_deck_url} target="_blank" className="block text-yellow-400 underline">Ver pitch deck</a>}
+            {form.pitch_deck_url && <p className="text-xs text-slate-300">Pitch deck privado guardado. No se publica automáticamente.</p>}
+            {privatePreviews.pitch_deck_url && <a href={privatePreviews.pitch_deck_url} target="_blank" rel="noopener noreferrer" className="block text-yellow-400 underline">Vista previa privada (10 minutos)</a>}
 
             <label className="block text-slate-300">Documento adicional PDF</label>
             <input
               type="file"
               accept="application/pdf"
               onChange={(e) =>
-                subirArchivo(e, "documentos", "documento_pdf", ["application/pdf"], 10)
+                subirArchivo(e, "Documentos", "documento_pdf", ["application/pdf"], 10)
               }
               className="w-full p-4 rounded-xl bg-slate-800"
             />
-            {form.documento_pdf && <a href={form.documento_pdf} target="_blank" className="block text-yellow-400 underline">Ver documento subido</a>}
+            {form.documento_pdf && <p className="text-xs text-slate-300">Documento privado guardado. Solo el titular y personal autorizado podrán acceder.</p>}
+            {privatePreviews.documento_pdf && <a href={privatePreviews.documento_pdf} target="_blank" rel="noopener noreferrer" className="block text-yellow-400 underline">Vista previa privada (10 minutos)</a>}
           </div>
 
           <button className="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-4 rounded-xl font-bold transition">

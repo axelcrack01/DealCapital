@@ -34,8 +34,9 @@ DECLARE
  v_job uuid;
  v_files jsonb:='[]'::jsonb;
 BEGIN
- IF current_user<>'service_role' THEN
-  RAISE EXCEPTION 'Service role required' USING ERRCODE='42501'; END IF;
+ -- EXECUTE is granted exclusively to service_role. SECURITY DEFINER
+ -- runs with the function owner's role, so current_user is not the caller.
+
  IF p_project_id IS NULL OR p_project_id<=0 OR p_actor_id IS NULL
  OR NOT EXISTS(
    SELECT 1 FROM auth.users u WHERE u.id=p_actor_id
@@ -138,8 +139,9 @@ DECLARE
  v_current_doc text;
  v_current_pitch text;
 BEGIN
- IF current_user<>'service_role' THEN
-  RAISE EXCEPTION 'Service role required' USING ERRCODE='42501'; END IF;
+ -- EXECUTE is granted exclusively to service_role. SECURITY DEFINER
+ -- runs with the function owner's role, so current_user is not the caller.
+
  IF p_job_id IS NULL OR p_actor_id IS NULL OR NOT EXISTS(
   SELECT 1 FROM auth.users u WHERE u.id=p_actor_id
   AND u.raw_app_meta_data->>'role'='admin'

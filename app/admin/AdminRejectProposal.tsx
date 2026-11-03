@@ -23,6 +23,7 @@ export default function AdminRejectProposal({projectId,onReviewed}:{
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState<string|null>(null);
   const [success,setSuccess]=useState(false);
+  const isSpecific=reason.trim()!==categories.find(x=>x.value===category)?.template.trim();
 
   const choose=(c:Category)=>{
     setCategory(c);
@@ -33,7 +34,7 @@ export default function AdminRejectProposal({projectId,onReviewed}:{
 
   const submit=async(e:FormEvent<HTMLFormElement>)=>{
     e.preventDefault();
-    if(saving||!confirmed||reason.trim().length<20||reason.trim().length>1000)return;
+    if(saving||!confirmed||!isSpecific||reason.trim().length<20||reason.trim().length>1000)return;
     setSaving(true);setError(null);setSuccess(false);
     try{
       const {data:auth,error:authError}=await supabase.auth.getUser();
@@ -87,13 +88,14 @@ export default function AdminRejectProposal({projectId,onReviewed}:{
           placeholder="Explica el motivo y las evidencias concretas."/>
       </label>
       <span className="block text-[11px] text-[#c5b7c8]">{reason.trim().length}/1000 caracteres</span>
+      {!isSpecific&&<p className="text-[11px] text-amber-200">Completa la explicación con los hechos revisados; el texto sugerido no basta para rechazar.</p>}
       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#eddbdf]">
         <input type="checkbox" required checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}
           className="mt-1 accent-rose-500"/>
         He comprobado el expediente. Confirmo el rechazo, la notificación y su programación de eliminación.
       </label>
       {error&&<p role="alert" className="text-xs text-rose-200">{error}</p>}
-      <button type="submit" disabled={saving||!confirmed||reason.trim().length<20||reason.trim().length>1000}
+      <button type="submit" disabled={saving||!confirmed||!isSpecific||reason.trim().length<20||reason.trim().length>1000}
         className="w-full rounded-lg bg-rose-600 px-3 py-2.5 text-xs font-extrabold text-white disabled:opacity-45">
         {saving?"Registrando rechazo…":"Confirmar rechazo"}
       </button>

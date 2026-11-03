@@ -69,7 +69,7 @@ export default async function DetalleProyecto({
               <div className="flex flex-wrap gap-3 mb-6">
                 {proyecto.proyecto_verificado && (
                   <span className="bg-green-600 px-4 py-2 rounded-full">
-                    Proyecto revisado para publicación
+                    Proyecto visible en el catálogo
                   </span>
                 )}
 

@@ -112,7 +112,8 @@ export default function AdminRejectionQueue({refreshToken,onReviewed}:{
             {r.has_files?" y archivos asociados":""}. No se borrarán automáticamente esas evidencias.
           </p>}
           {!archived&&<AdminRetentionControls projectId={r.project_id} hold={hold} deadlineReached={expired} hasFiles={r.has_files} dependencies={r.dependencies} onUpdated={onReviewed}/>}
-          {!archived&&<div className="mt-3">
+          {preserved&&!archived&&<p className="mt-3 text-[11px] leading-5 text-amber-200">Para restaurar primero debes levantar el bloqueo de conservación mediante una decisión auditada.</p>}
+          {!archived&&!preserved&&<div className="mt-3">
             {restoring===r.project_id?<form onSubmit={restore} className="max-w-lg space-y-3">
               <label className="block text-xs font-bold">Justificación para anular el rechazo
                 <textarea rows={3} value={reason} onChange={e=>setReason(e.target.value)}

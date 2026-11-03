@@ -9,6 +9,7 @@ export default function Registro() {
   const [email,setEmail] = useState("");
   const [tipo,setTipo] = useState<"emprendedor" | "inversionista">("emprendedor");
   const [password,setPassword] = useState("");
+  const [confirmPassword,setConfirmPassword] = useState("");
   const [accepted,setAccepted] = useState(false);
   const [loading,setLoading] = useState(false);
   const [message,setMessage] = useState("");
@@ -18,8 +19,12 @@ export default function Registro() {
     event.preventDefault();
     if (loading) return;
     setMessage("");
-    if (nombre.trim().length < 3 || password.length < 10 || !accepted) {
-      setMessage("Comprueba tu nombre, la contraseña (mínimo 10 caracteres) y la confirmación.");
+    if (nombre.trim().length < 3 || password.length < 12 || !accepted) {
+      setMessage("Comprueba tu nombre, la contraseña (mínimo 12 caracteres) y el consentimiento.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setMessage("Las contraseñas no coinciden. Corrígelas antes de crear tu cuenta.");
       return;
     }
     setLoading(true);
@@ -98,8 +103,14 @@ export default function Registro() {
             <label className="block"><span className="mb-2 block text-sm text-slate-300">Correo electrónico</span>
               <input className="dc-input" type="email" autoComplete="email" required placeholder="nombre@correo.com" value={email} onChange={e=>setEmail(e.target.value)} /></label>
             <label className="block"><span className="mb-2 block text-sm text-slate-300">Contraseña</span>
-              <input className="dc-input" type="password" autoComplete="new-password" minLength={10} required placeholder="Mínimo 10 caracteres" value={password} onChange={e=>setPassword(e.target.value)}/>
-              <span className="mt-2 block text-xs text-slate-500">Usa una contraseña única que no utilices en otros servicios.</span></label>
+              <input className="dc-input" type="password" autoComplete="new-password" minLength={12} required placeholder="Mínimo 12 caracteres" value={password} onChange={e=>setPassword(e.target.value)}/>
+              <span className="mt-2 block text-xs text-slate-500">Utiliza una contraseña única o una frase de acceso larga. Un gestor de contraseñas puede ayudarte a generar una segura.</span></label>
+            <label className="block"><span className="mb-2 block text-sm text-slate-300">Confirmar contraseña</span>
+              <input className="dc-input" type="password" autoComplete="new-password" minLength={12} required
+                placeholder="Repite tu contraseña" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/>
+              {confirmPassword && password !== confirmPassword &&
+                <span className="mt-2 block text-xs text-amber-200">Las contraseñas aún no coinciden.</span>}
+            </label>
             <label className="flex items-start gap-3 rounded-lg border border-slate-700 p-4 text-xs leading-6 text-slate-300">
               <input className="mt-1 accent-amber-300" type="checkbox" checked={accepted} onChange={e=>setAccepted(e.target.checked)} required />
               <span>Entiendo que DealCapital es un MVP, no verifica actualmente identidades mediante RENIEC o SBS y no garantiza rendimientos. <Link href="/verificacion" className="text-amber-200 underline">Conocer el proceso de verificación previsto</Link>.</span>

@@ -138,6 +138,8 @@ export default function Perfil() {
       <section className="max-w-5xl mx-auto">
         <h1 className="text-5xl font-bold mb-4">Mi Perfil</h1>
 
+        <a href="/expediente" className="mb-6 inline-flex rounded-xl border border-yellow-500/60 px-5 py-3 text-sm font-bold text-yellow-400 hover:bg-yellow-500/10">Consultar preparación de mi expediente</a>
+
         <p className="text-slate-300 mb-10">
           Completa tu información para generar mayor confianza dentro de DealCapital.
         </p>

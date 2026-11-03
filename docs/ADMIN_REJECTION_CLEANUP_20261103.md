@@ -35,7 +35,7 @@ El título "Inversiones en Restaurante Baradero 21" aparece 7 veces con el mismo
 ## Prevención de duplicados
 
 - El formulario deshabilita el botón durante el envío y después de una inserción exitosa.
-- Trigger `dc_block_rapid_duplicate_projects`: bajo `authenticated`, rechaza nuevos envíos con **mismo propietario, título normalizado y monto** dentro de la última hora, incluyendo solicitudes concurrentes mediante lock transaccional.
+- Trigger `dc_block_rapid_duplicate_projects`: bajo `authenticated`, rechaza nuevos envíos con **mismo propietario, título normalizado y monto**, aunque la propuesta anterior sea antigua mientras exista otro expediente activo, sin límite temporal, incluyendo solicitudes concurrentes mediante lock transaccional.
 - Los duplicados históricos **no se alteran** con el trigger.
 - Admin v4 señala candidatos con nombre, propietario y monto coincidentes, vinculados visualmente al expediente de referencia, sin eliminar automáticamente nada.
 
@@ -43,6 +43,7 @@ El título "Inversiones en Restaurante Baradero 21" aparece 7 veces con el mismo
 
 - `20261103180530_dealcapital_proposal_rejections_safe_purge_and_duplicates_20261103.sql`.
 - `20261103180557_dealcapital_rejected_proposal_purge_hourly_cron_20261103.sql`.
+- `20261103181223_dealcapital_block_repeated_active_proposals_20261103.sql` (refuerza la deduplicación de registros activos antiguos).
 
 ## Pruebas reproducibles con ROLLBACK
 

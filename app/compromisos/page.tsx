@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 
 export default function Compromisos() {
   const [compromisos, setCompromisos] = useState<any[]>([]);
+  const [currentUserId,setCurrentUserId]=useState<string|null>(null);
 
   const cargarCompromisos = async () => {
     const { data: userData } = await supabase.auth.getUser();
@@ -14,9 +15,11 @@ export default function Compromisos() {
       return;
     }
 
+    setCurrentUserId(userData.user.id);
+
     const { data, error } = await supabase
       .from("compromisos")
-      .select("*, proyectos(nombre_proyecto, monto_recaudado, capital_requerido)")
+      .select("*, proyectos(nombre_proyecto, monto_recaudado, capital_requerido, user_id)")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -97,7 +100,7 @@ export default function Compromisos() {
                   </div>
                 </div>
 
-                {c.estado === "pendiente" && (
+                {c.estado === "pendiente" && c.proyectos?.user_id === currentUserId && (
                   <div className="flex gap-3 mt-5">
                     <button
                       onClick={() =>

@@ -149,7 +149,7 @@ export default function Dashboard() {
                 <p className="mt-2 text-xs text-rose-200">{r.purged_at?"Contenido eliminado":retentionHolds[r.project_id]?"Eliminación suspendida por una medida de conservación": "Eliminación prevista a partir de "+new Intl.DateTimeFormat("es-PE",{dateStyle:"medium",timeZone:"America/Lima"}).format(new Date(r.delete_after))}</p>
               </article>)}
             </section>}
-            <h2 className="text-3xl font-bold mb-6">Mis proyectos</h2>
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><h2 className="text-3xl font-bold">Mis proyectos</h2><a href="/seguimiento" className="rounded-xl border border-yellow-500 px-4 py-2 text-sm font-bold text-yellow-400 hover:bg-yellow-500 hover:text-slate-950">Seguimiento de propuestas</a></div>
 
             <div className="space-y-4 mb-12">
               {proyectos.map((p) => {

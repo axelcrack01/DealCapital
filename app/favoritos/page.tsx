@@ -16,7 +16,7 @@ export default function Favoritos() {
 
     const { data, error } = await supabase
       .from("favoritos")
-      .select("*, proyectos(*)")
+      .select("*, proyectos(id,nombre_proyecto,descripcion,imagen_url)")
       .eq("user_id", userData.user.id)
       .order("created_at", { ascending: false });
 

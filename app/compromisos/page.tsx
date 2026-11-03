@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 
 export default function Compromisos() {
   const [compromisos, setCompromisos] = useState<any[]>([]);
+  const [currentUserId,setCurrentUserId]=useState<string|null>(null);
 
   const cargarCompromisos = async () => {
     const { data: userData } = await supabase.auth.getUser();
@@ -14,9 +15,11 @@ export default function Compromisos() {
       return;
     }
 
+    setCurrentUserId(userData.user.id);
+
     const { data, error } = await supabase
       .from("compromisos")
-      .select("*, proyectos(nombre_proyecto, monto_recaudado, capital_requerido)")
+      .select("*, proyectos(nombre_proyecto, monto_recaudado, capital_requerido, user_id)")
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -32,84 +35,20 @@ export default function Compromisos() {
   }, []);
 
   const actualizarCompromiso = async (
-    compromisoId: number,
-    proyectoId: number,
-    monto: number,
-    estado: "aceptado" | "rechazado"
+    compromisoId:number,
+    estado:"aceptado"|"rechazado"
   ) => {
-    if (estado === "aceptado") {
-      const { data: proyecto, error: proyectoError } = await supabase
-        .from("proyectos")
-        .select("monto_recaudado, capital_requerido")
-        .eq("id", proyectoId)
-        .single();
+    // This is a review of an intention, not proof of money received.
+    // The database validates the transition and notifies the investor.
+    const {error}=await supabase.from("compromisos")
+      .update({estado})
+      .eq("id",compromisoId);
 
-      if (proyectoError) {
-        alert(JSON.stringify(proyectoError, null, 2));
-        return;
-      }
-
-      const nuevoMonto =
-        Number(proyecto?.monto_recaudado || 0) + Number(monto);
-
-      const porcentaje =
-        Number(proyecto?.capital_requerido || 0) > 0
-          ? Math.min(
-              (nuevoMonto / Number(proyecto.capital_requerido)) * 100,
-              100
-            )
-          : 0;
-
-      const { error: updateProyectoError } = await supabase
-        .from("proyectos")
-        .update({
-          monto_recaudado: nuevoMonto,
-          porcentaje_financiado: porcentaje,
-        })
-        .eq("id", proyectoId);
-
-      if (updateProyectoError) {
-        alert(JSON.stringify(updateProyectoError, null, 2));
-        return;
-      }
-    }
-    const { data: compromisoData } = await supabase
-  .from("compromisos")
-  .select("inversionista_id")
-  .eq("id", compromisoId)
-  .single();
-
-if (compromisoData?.inversionista_id) {
-  await supabase.from("notificaciones").insert([
-    {
-      user_id: compromisoData.inversionista_id,
-      tipo:
-        estado === "aceptado"
-          ? "Compromiso aceptado"
-          : "Compromiso rechazado",
-      mensaje:
-        estado === "aceptado"
-          ? "Tu compromiso de inversión fue aceptado."
-          : "Tu compromiso de inversión fue rechazado.",
-    },
-  ]);
-}
-
-    const { error } = await supabase
-      .from("compromisos")
-      .update({
-        estado,
-        aprobado_at: estado === "aceptado" ? new Date().toISOString() : null,
-        rechazado_at: estado === "rechazado" ? new Date().toISOString() : null,
-      })
-      .eq("id", compromisoId);
-
-    if (error) {
-      alert(JSON.stringify(error, null, 2));
+    if(error) {
+      alert("No se pudo actualizar el compromiso. Revisa tu acceso y su estado actual.");
       return;
     }
-
-    cargarCompromisos();
+    void cargarCompromisos();
   };
 
   return (
@@ -149,7 +88,7 @@ if (compromisoData?.inversionista_id) {
 
                 <div className="mt-5">
                   <div className="flex justify-between text-sm text-slate-400 mb-2">
-                    <span>Progreso del proyecto</span>
+                    <span>Progreso declarado (no son transferencias confirmadas)</span>
                     <span>{Math.round(progreso)}%</span>
                   </div>
 
@@ -161,14 +100,12 @@ if (compromisoData?.inversionista_id) {
                   </div>
                 </div>
 
-                {c.estado === "pendiente" && (
+                {c.estado === "pendiente" && c.proyectos?.user_id === currentUserId && (
                   <div className="flex gap-3 mt-5">
                     <button
                       onClick={() =>
                         actualizarCompromiso(
                           c.id,
-                          c.proyecto_id,
-                          c.monto,
                           "aceptado"
                         )
                       }
@@ -181,8 +118,6 @@ if (compromisoData?.inversionista_id) {
                       onClick={() =>
                         actualizarCompromiso(
                           c.id,
-                          c.proyecto_id,
-                          c.monto,
                           "rechazado"
                         )
                       }

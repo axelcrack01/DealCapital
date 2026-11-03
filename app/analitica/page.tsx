@@ -12,7 +12,7 @@ export default function Analitica() {
 
   useEffect(() => {
     const cargar = async () => {
-      const { data } = await supabase.from("proyectos").select("*");
+      const { data } = await supabase.from("proyectos").select("id,nombre_proyecto,capital_requerido,monto_recaudado,proyecto_verificado,riesgo,industria").eq("proyecto_verificado",true);
       setProyectos(data || []);
     };
 
@@ -47,7 +47,7 @@ export default function Analitica() {
           <Card title="Proyectos" value={totalProyectos} />
           <Card title="Capital solicitado" value={`S/ ${capitalSolicitado.toLocaleString("es-PE")}`} />
           <Card title="Capital recaudado" value={`S/ ${capitalRecaudado.toLocaleString("es-PE")}`} />
-          <Card title="Verificados" value={verificados} />
+          <Card title="Visibles en catálogo" value={verificados} />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">

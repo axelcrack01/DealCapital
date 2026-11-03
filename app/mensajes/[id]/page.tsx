@@ -13,6 +13,7 @@ export default function ChatPage({
   const [userId, setUserId] = useState("");
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [contenido, setContenido] = useState("");
+  const [sendError,setSendError]=useState<string|null>(null);
 
   const cargarMensajes = async () => {
     const { data } = await supabase
@@ -84,27 +85,20 @@ export default function ChatPage({
 
     if (!conversacion) return;
 
-    await supabase.from("mensajes").insert([
+    // The database checks the conversation participant and generates a
+    // recipient notification only if the message insert succeeds.
+    const {error:sendError}=await supabase.from("mensajes").insert([
       {
-        conversacion_id: Number(id),
-        sender_id: userData.user.id,
-        contenido,
+        conversacion_id:Number(id),
+        sender_id:userData.user.id,
+        contenido:contenido.trim(),
       },
     ]);
-
-    const receptorId =
-      userData.user.id === conversacion.emprendedor_id
-        ? conversacion.inversionista_id
-        : conversacion.emprendedor_id;
-
-    await supabase.from("notificaciones").insert([
-      {
-        user_id: receptorId,
-        tipo: "Nuevo mensaje",
-        mensaje: "Tienes un nuevo mensaje en DealCapital.",
-      },
-    ]);
-
+    if(sendError) {
+      setSendError("No se pudo enviar el mensaje. Comprueba tu acceso e intenta nuevamente.");
+      return;
+    }
+    setSendError(null);
     setContenido("");
   };
 
@@ -128,6 +122,7 @@ export default function ChatPage({
           ))}
         </div>
 
+        {sendError&&<p role="alert" className="mb-3 text-sm text-rose-300">{sendError}</p>}
         <form onSubmit={enviarMensaje} className="flex gap-3">
           <input
             value={contenido}

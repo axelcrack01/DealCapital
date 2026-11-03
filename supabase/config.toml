@@ -1,2 +1,5 @@
 [functions.dc-retire-private-documents]
 verify_jwt = true
+
+[functions.dc-storage-synthetic-qa]
+verify_jwt = true

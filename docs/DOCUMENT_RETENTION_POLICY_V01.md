@@ -44,7 +44,7 @@ Flujo:
 5. `dc_service_finish_file_retirement` confirma que Storage ya no conserva los objetos, que el proyecto y los bloqueos no han cambiado y que la referencia coincide antes de limpiar columnas. Registra evento de custodia y deja que Cron purgue el expediente si cumple las demás condiciones.
 6. Si falla la eliminación o cambia el estado, se conservan las referencias para revisión/reintento; tras un trabajo incompleto, volver a evaluar el expediente. El proceso no garantiza una transacción atómica entre la API de archivos y PostgreSQL.
 
-La eliminación de archivos en Storage es permanente a nivel de API, pero las **copias de seguridad** del proveedor pueden seguir ciclos de conservación independientes. Debe verificarse ese alcance antes de prometer eliminación completa o inmediata de todas las copias.
+El bloqueo de conservación debe aplicarse antes de iniciar la retirada de archivos. Una vez iniciada, no puede prometerse su reversión. La eliminación de archivos en Storage es permanente a nivel de API, pero las **copias de seguridad** del proveedor pueden seguir ciclos de conservación independientes. Debe verificarse ese alcance antes de prometer eliminación completa o inmediata de todas las copias.
 
 ## Estado comprobado en producción
 
@@ -57,6 +57,7 @@ A las 13:37 (Perú) del 3/11/2026 existían seis rechazos de Baradero 21, IDs `1
 - Activar conservación de #12 bloqueó una purga simulada con plazo vencido; liberarla permitió la purga y produjo tres eventos de auditoría, todo revertido.
 - La restauración de un expediente con conservación activa fue rechazada; la edición directa de un expediente rechazado por su propietario también fue rechazada.
 - Un PDF de ruta canónica ficticia no existente pasó por preparación, confirmación de ausencia en Storage, limpieza de referencia y auditoría dentro de transacción revertida.
+- Si existe una retirada de archivos iniciada en los últimos 15 minutos, no se acepta un nuevo bloqueo de conservación que no pudiera detener con garantías la operación ya iniciada; prueba reversible superada.
 - La función de retiro de archivos físicos está desplegada y exige JWT. **Falta prueba real con PDF de QA y sesión administrativa autenticada**, por lo que no se afirma que la retirada física esté certificada de extremo a extremo.
 
 ## Pendientes de conformidad y operación

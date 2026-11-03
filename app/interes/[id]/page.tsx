@@ -87,14 +87,9 @@ export default function InteresProyecto({
     }
   }
 
+  // Supabase creates the owner's notification transactionally when
+  // the interest row is inserted; clients cannot choose recipients.
   window.location.href = `/mensajes/${conversacion.id}`;
-  await supabase.from("notificaciones").insert([
-  {
-    user_id: proyecto.user_id,
-    tipo: "Nuevo interesado",
-    mensaje: `${form.nombre} está interesado en tu proyecto.`,
-  },
-]);
 };
 
   return (

@@ -10,6 +10,7 @@ import AdminReviewHistory from "./AdminReviewHistory";
 import AdminPrivateDocuments from "./AdminPrivateDocuments";
 import AdminRejectProposal from "./AdminRejectProposal";
 import AdminRejectionQueue from "./AdminRejectionQueue";
+import AdminRetentionHistory from "./AdminRetentionHistory";
 
 type Project = {id:number;nombre_proyecto:string|null;emprendedor:string|null;industria:string|null;capital_requerido:number|null;proyecto_verificado:boolean|null;estado:string|null;user_id:string|null;created_at:string|null};
 type User = {id:string;nombre:string|null;email:string|null;tipo_usuario:string|null;perfil_verificado:boolean|null;empresa_verificada:boolean|null;created_at:string|null};
@@ -225,6 +226,7 @@ export default function Admin() {
           </section>
           <AdminReviewHistory refreshToken={reload}/>
           <AdminRejectionQueue refreshToken={reload} onReviewed={()=>setReload(v=>v+1)}/>
+          <AdminRetentionHistory refreshToken={reload}/>
         </div> : <section className="p-5 lg:p-7">
           <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div><h3 className="text-xl font-extrabold">{tab==="proyectos"?"Registro de proyectos":tab==="usuarios"?"Perfiles de usuarios":"Interés en proyectos"}</h3><p className={"mt-2 text-xs "+faint}>Vista de lectura según los permisos de la sesión.</p></div>

@@ -1,0 +1,2 @@
+[functions.dc-retire-private-documents]
+verify_jwt = true

@@ -98,7 +98,7 @@ Deno.serve(async(request:Request)=>{
       }else{
         attempted=true;
         const {error:uploadError}=await adminClient.storage.from(BUCKET)
-          .upload(path,bytes,{contentType:MIME,cacheControl:"0",upsert:false});
+          .upload(path,new Blob([bytes],{type:MIME}),{contentType:MIME,cacheControl:"0",upsert:false});
         if(uploadError){
           failure="upload_failed";
         }else{

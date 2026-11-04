@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python/Selenium QA - may contain personal account data
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+/test-results/

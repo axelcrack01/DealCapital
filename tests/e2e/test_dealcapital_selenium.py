@@ -67,10 +67,24 @@ def go(driver, path: str):
 
 
 def click_visible(driver, element):
-    """Scroll like a real user before attempting a native WebDriver click."""
-    driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", element)
+    """Wait for scroll stabilization before a *native* WebDriver click.
+
+    DealCapital sets CSS scroll-behavior:smooth; calling click() during the
+    animation can target coordinates below the viewport in headless Chrome.
+    """
+    driver.execute_script("""
+        document.documentElement.style.scrollBehavior = 'auto';
+        arguments[0].scrollIntoView({
+            behavior: 'instant', block: 'center', inline: 'nearest'
+        });
+    """, element)
     WebDriverWait(driver, WAIT).until(
         lambda d: element.is_displayed() and element.is_enabled()
+        and d.execute_script("""
+            const box = arguments[0].getBoundingClientRect();
+            return box.top >= 0 && box.bottom <= window.innerHeight
+                && box.left >= 0 && box.right <= window.innerWidth;
+        """, element)
     )
     element.click()
 

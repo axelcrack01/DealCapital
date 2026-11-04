@@ -3,6 +3,7 @@ import Link from "next/link";
 import {useCallback,useEffect,useState,type FormEvent} from "react";
 import {supabase} from "../../../lib/supabase";
 type Status="pendiente"|"en_revision"|"observada"|"cerrada";
+type ResponseRow={request_id:number;owner_response:string;owner_response_at:string};
 type Request={id:number;owner_id:string;request_type:"perfil"|"empresa";status:Status;review_note:string|null;created_at:string;updated_at:string};
 const stateNames:Record<Status,string>={pendiente:"Pendiente",en_revision:"En revisión",observada:"Observada",cerrada:"Cerrada"};
 function Review({item,onSaved}:{item:Request;onSaved:()=>void}){
@@ -43,6 +44,7 @@ function Review({item,onSaved}:{item:Request;onSaved:()=>void}){
 export default function AdminVerification(){
  const [access,setAccess]=useState<"loading"|"allowed"|"denied">("loading");
  const [items,setItems]=useState<Request[]>([]);
+ const [responses,setResponses]=useState<ResponseRow[]>([]);
  const [error,setError]=useState("");
  const [refresh,setRefresh]=useState(0);
  const load=useCallback(async()=>{

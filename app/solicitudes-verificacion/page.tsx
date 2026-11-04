@@ -1,8 +1,10 @@
 "use client";
 import Link from "next/link";
+import OwnerResponse from "./OwnerResponse";
 import {useCallback,useEffect,useState} from "react";
 import {supabase} from "../../lib/supabase";
 
+type ResponseRow={request_id:number;owner_response:string;owner_response_at:string};
 type Request={id:number;request_type:"perfil"|"empresa";status:"pendiente"|"en_revision"|"observada"|"cerrada";review_note:string|null;created_at:string;updated_at:string};
 const statusLabel:Record<Request["status"],string>={
  pendiente:"Pendiente",en_revision:"En revisión",observada:"Observada",cerrada:"Cerrada"
@@ -11,6 +13,7 @@ const date=(s:string)=>new Intl.DateTimeFormat("es-PE",{dateStyle:"medium",timeS
 
 export default function SolicitudesVerificacion(){
  const [items,setItems]=useState<Request[]>([]);
+ const [responses,setResponses]=useState<ResponseRow[]>([]);
  const [state,setState]=useState<"loading"|"ready"|"login"|"error">("loading");
  const [saving,setSaving]=useState<"perfil"|"empresa"|null>(null);
  const [notice,setNotice]=useState("");
@@ -18,9 +21,13 @@ export default function SolicitudesVerificacion(){
   setState("loading");
   const {data:auth,error:authError}=await supabase.auth.getUser();
   if(authError||!auth.user){setState("login");return;}
-  const {data,error}=await supabase.rpc("dc_my_verification_requests");
-  if(error){setState("error");return;}
-  setItems((data||[]) as Request[]);setState("ready");
+  const [requestsResult,responsesResult]=await Promise.all([
+   supabase.rpc("dc_my_verification_requests"),
+   supabase.rpc("dc_verification_responses",{p_limit:100})
+  ]);
+  if(requestsResult.error||responsesResult.error){setState("error");return;}
+  setItems((requestsResult.data||[]) as Request[]);
+  setResponses((responsesResult.data||[]) as ResponseRow[]);setState("ready");
  },[]);
  useEffect(()=>{void load();},[load]);
  const submit=async(type:"perfil"|"empresa")=>{
@@ -35,6 +42,7 @@ export default function SolicitudesVerificacion(){
   finally{setSaving(null);}
  };
  const open=new Set(items.filter(r=>r.status!=="cerrada").map(r=>r.request_type));
+ const responseMap=new Map(responses.map(r=>[r.request_id,r]));
  return <main className="min-h-screen bg-[#071429] px-5 py-20 text-white">
   <section className="mx-auto max-w-5xl">
    <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#facc15]">DealCapital / Expediente</p>
@@ -62,6 +70,8 @@ export default function SolicitudesVerificacion(){
       <div className="flex flex-wrap items-center justify-between gap-3"><h3 className="font-bold">{r.request_type==="perfil"?"Perfil":"Empresa"} · #{r.id}</h3><span className="rounded-full border border-[#687b93] px-3 py-1 text-xs">{statusLabel[r.status]}</span></div>
       <p className="mt-3 text-xs text-[#9db2ca]">Enviada: {date(r.created_at)} · Actualizada: {date(r.updated_at)}</p>
       {r.review_note&&<p className="mt-4 whitespace-pre-wrap rounded-lg bg-[#071429] p-4 text-sm leading-6 text-[#d6e2f1]"><strong>Observación administrativa:</strong> {r.review_note}</p>}
+      {responseMap.get(r.id)&&<p className="mt-3 whitespace-pre-wrap rounded-lg border border-[#3c5976] p-4 text-sm leading-6 text-[#d6e2f1]"><strong>Última subsanación enviada:</strong> {responseMap.get(r.id)?.owner_response}</p>}
+      {r.status==="observada"&&<OwnerResponse requestId={r.id} onSubmitted={()=>void load()}/>}
       {r.status==="cerrada"&&<p className="mt-3 text-xs leading-6 text-amber-200">Expediente cerrado administrativamente; no equivale a identidad verificada ni certificación financiera.</p>}
      </article>)}</div>}
     </>}

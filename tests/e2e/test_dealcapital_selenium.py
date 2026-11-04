@@ -51,19 +51,12 @@ def driver(request: pytest.FixtureRequest):
         pytest.fail(f"No se pudo iniciar WebDriver ({browser}): {exc}")
     session.set_page_load_timeout(40)
     yield session
-    if request.node.rep_call.failed:
+    if getattr(request.node, "rep_call", None) is not None and request.node.rep_call.failed:
         output = Path(os.getenv("DC_ARTIFACT_DIR", "test-results/screenshots"))
         output.mkdir(parents=True, exist_ok=True)
         name = "".join(c if c.isalnum() or c in "-_" else "_" for c in request.node.name)
         session.save_screenshot(str(output / f"{name}.png"))
     session.quit()
-
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    result = outcome.get_result()
-    setattr(item, f"rep_{result.when}", result)
 
 
 def go(driver, path: str):

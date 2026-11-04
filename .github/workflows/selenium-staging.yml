@@ -1,0 +1,104 @@
+name: DealCapital QA - authenticated and staging E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_mutations:
+        description: "Ejecutar flujos de escritura SOLO en staging Supabase aislado"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  authenticated-readonly:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: qa-staging
+    timeout-minutes: 20
+    env:
+      DC_BASE_URL: ${{ vars.DC_STAGING_BASE_URL }}
+      DC_BROWSER: chrome
+      DC_HEADLESS: "1"
+      DC_ENTREPRENEUR_EMAIL: ${{ secrets.DC_ENTREPRENEUR_EMAIL }}
+      DC_ENTREPRENEUR_PASSWORD: ${{ secrets.DC_ENTREPRENEUR_PASSWORD }}
+      DC_INVESTOR_EMAIL: ${{ secrets.DC_INVESTOR_EMAIL }}
+      DC_INVESTOR_PASSWORD: ${{ secrets.DC_INVESTOR_PASSWORD }}
+      DC_ADMIN_EMAIL: ${{ secrets.DC_ADMIN_EMAIL }}
+      DC_ADMIN_PASSWORD: ${{ secrets.DC_ADMIN_PASSWORD }}
+      SE_AVOID_STATS: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/e2e/requirements.txt
+      - run: python -m pip install -r tests/e2e/requirements.txt
+      - name: Confirm QA environment and identities
+        run: |
+          test -n "$DC_BASE_URL"
+          test -n "$DC_ENTREPRENEUR_EMAIL"
+          test -n "$DC_ENTREPRENEUR_PASSWORD"
+          test -n "$DC_INVESTOR_EMAIL"
+          test -n "$DC_INVESTOR_PASSWORD"
+          test -n "$DC_ADMIN_EMAIL"
+          test -n "$DC_ADMIN_PASSWORD"
+          test "$DC_BASE_URL" != "https://deal-capital.vercel.app"
+      - name: Run all authenticated read-only browser tests
+        run: python -m pytest -m auth -v --junitxml=test-results/selenium-auth.xml
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-auth-junit
+          path: test-results/selenium-auth.xml
+          if-no-files-found: warn
+          retention-days: 2
+
+  staging-write-flows:
+    if: github.ref == 'refs/heads/main' && inputs.run_mutations
+    runs-on: ubuntu-latest
+    environment: qa-staging
+    timeout-minutes: 30
+    env:
+      DC_BASE_URL: ${{ vars.DC_STAGING_BASE_URL }}
+      DC_STAGING_BASE_URL: ${{ vars.DC_STAGING_BASE_URL }}
+      DC_STAGING_SUPABASE_REF: ${{ vars.DC_STAGING_SUPABASE_REF }}
+      DC_ALLOW_STAGING_MUTATIONS: YES_ISOLATED_STAGING
+      DC_BROWSER: chrome
+      DC_HEADLESS: "1"
+      DC_ENTREPRENEUR_EMAIL: ${{ secrets.DC_ENTREPRENEUR_EMAIL }}
+      DC_ENTREPRENEUR_PASSWORD: ${{ secrets.DC_ENTREPRENEUR_PASSWORD }}
+      DC_INVESTOR_EMAIL: ${{ secrets.DC_INVESTOR_EMAIL }}
+      DC_INVESTOR_PASSWORD: ${{ secrets.DC_INVESTOR_PASSWORD }}
+      DC_ADMIN_EMAIL: ${{ secrets.DC_ADMIN_EMAIL }}
+      DC_ADMIN_PASSWORD: ${{ secrets.DC_ADMIN_PASSWORD }}
+      SE_AVOID_STATS: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/e2e/requirements.txt
+      - run: python -m pip install -r tests/e2e/requirements.txt
+      - name: Refuse unsafe or incomplete staging config
+        run: |
+          test -n "$DC_STAGING_BASE_URL"
+          test -n "$DC_STAGING_SUPABASE_REF"
+          test -n "$DC_ADMIN_EMAIL"
+          test -n "$DC_ENTREPRENEUR_EMAIL"
+          test -n "$DC_INVESTOR_EMAIL"
+          test "$DC_STAGING_BASE_URL" != "https://deal-capital.vercel.app"
+          test "$DC_STAGING_SUPABASE_REF" != "knsqqhucibferrvwjakv"
+      - name: Run isolated staging verification/project/investment scenarios
+        run: python -m pytest -m staging -v --junitxml=test-results/selenium-staging.xml
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-staging-junit
+          path: test-results/selenium-staging.xml
+          if-no-files-found: warn
+          retention-days: 2

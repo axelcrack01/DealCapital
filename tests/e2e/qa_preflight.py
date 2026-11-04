@@ -12,7 +12,6 @@ from collections.abc import Mapping
 from urllib.parse import urlparse
 
 PRODUCTION_PROJECT_REF = "knsqqhucibferrvwjakv"
-PRODUCTION_ADMIN_EMAIL = "axel.valladares.flores@gmail.com"
 PRODUCTION_HOSTS = frozenset({
     "deal-capital.vercel.app",
     "deal-capital-capitaldeal.vercel.app",
@@ -57,8 +56,8 @@ def validate_qa_config(env: Mapping[str, str], *, mutations: bool) -> list[str]:
     emails = [(env.get(f"DC_{role}_EMAIL") or "").strip().lower() for role in QA_ROLES]
     if all(emails) and len(set(emails)) != len(emails):
         errors.append("QA test accounts must have distinct emails")
-    if emails[-1] == PRODUCTION_ADMIN_EMAIL:
-        errors.append("Do not use the production administrator account for QA")
+    if emails[-1] and not emails[-1].split("@", 1)[0].startswith("qa-"):
+        errors.append("Use a dedicated QA administrator account with a qa- email prefix")
 
     if mutations and env.get("DC_ALLOW_STAGING_MUTATIONS") != "YES_ISOLATED_STAGING":
         errors.append("Mutation opt-in is missing")

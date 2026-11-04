@@ -59,6 +59,7 @@ export default function AdminVerification(){
   }catch{setError("No se pudo conectar al servicio.");setAccess("denied");}
  },[]);
  useEffect(()=>{void load();},[load,refresh]);
+ const responseMap=new Map(responses.map(r=>[r.request_id,r]));
  return <main className="min-h-screen bg-[#071429] px-5 py-20 text-white"><section className="mx-auto max-w-5xl">
   <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#facc15]">DealCapital / Administración</p>
   <h1 className="mt-3 text-3xl font-extrabold md:text-5xl">Revisión de expedientes</h1>
@@ -72,6 +73,7 @@ export default function AdminVerification(){
     <p className="mt-2 break-all text-xs text-[#adc2d9]">ID del solicitante: {item.owner_id}</p>
     <p className="mt-2 text-xs text-[#adc2d9]">Registrada: {new Intl.DateTimeFormat("es-PE",{dateStyle:"medium",timeZone:"America/Lima"}).format(new Date(item.created_at))}</p>
     {item.review_note&&<p className="mt-3 whitespace-pre-wrap rounded-xl bg-[#071429] p-4 text-sm"><strong>Última observación:</strong> {item.review_note}</p>}
+    {responseMap.get(item.id)&&<p className="mt-3 whitespace-pre-wrap rounded-xl border border-[#60718a] p-4 text-sm"><strong>Última subsanación:</strong> {responseMap.get(item.id)?.owner_response}</p>}
     <Review item={item} onSaved={()=>setRefresh(x=>x+1)}/>
    </article>)}</div>}
  </section></main>;

@@ -34,6 +34,10 @@ jobs:
         run: python -m pip install -r tests/e2e/requirements.txt
       - name: Validate Python syntax
         run: python -m compileall -q tests/e2e
+      - name: Verify all 18 authenticated and staging scenarios collect
+        run: python -m pytest --collect-only -q -m "auth or staging"
+      - name: Run offline QA isolation guardrails
+        run: python -m pytest -m guard -v --junitxml=test-results/qa-guard.xml
       - name: Run browser smoke tests (read-only)
         run: python -m pytest -m smoke -v --junitxml=test-results/selenium-public.xml
       - name: Upload reports and screenshots

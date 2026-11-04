@@ -52,9 +52,10 @@ export default function AdminVerification(){
   try{
    const {data:auth,error:authErr}=await supabase.auth.getUser();
    if(authErr||!auth.user||auth.user.app_metadata?.role!=="admin"){setAccess("denied");return;}
-   const {data,error:rpcErr}=await supabase.rpc("dc_admin_verification_queue",{p_limit:100});
-   if(rpcErr){setError("No se pudo consultar la cola administrativa.");setAccess("denied");return;}
-   setItems((data||[]) as Request[]);setAccess("allowed");
+   const [queue,replies]=await Promise.all([supabase.rpc("dc_admin_verification_queue",{p_limit:100}),supabase.rpc("dc_verification_responses",{p_limit:100})]);
+   if(queue.error||replies.error){setError("No se pudo consultar la cola administrativa.");setAccess("denied");return;}
+   setItems((queue.data||[]) as Request[]);
+   setResponses((replies.data||[]) as ResponseRow[]);setAccess("allowed");
   }catch{setError("No se pudo conectar al servicio.");setAccess("denied");}
  },[]);
  useEffect(()=>{void load();},[load,refresh]);

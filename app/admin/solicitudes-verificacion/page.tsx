@@ -3,6 +3,7 @@ import Link from "next/link";
 import {useCallback,useEffect,useState,type FormEvent} from "react";
 import {supabase} from "../../../lib/supabase";
 type Status="pendiente"|"en_revision"|"observada"|"cerrada";
+type ResponseRow={request_id:number;owner_response:string;owner_response_at:string};
 type Request={id:number;owner_id:string;request_type:"perfil"|"empresa";status:Status;review_note:string|null;created_at:string;updated_at:string};
 const stateNames:Record<Status,string>={pendiente:"Pendiente",en_revision:"En revisión",observada:"Observada",cerrada:"Cerrada"};
 function Review({item,onSaved}:{item:Request;onSaved:()=>void}){
@@ -43,6 +44,7 @@ function Review({item,onSaved}:{item:Request;onSaved:()=>void}){
 export default function AdminVerification(){
  const [access,setAccess]=useState<"loading"|"allowed"|"denied">("loading");
  const [items,setItems]=useState<Request[]>([]);
+ const [responses,setResponses]=useState<ResponseRow[]>([]);
  const [error,setError]=useState("");
  const [refresh,setRefresh]=useState(0);
  const load=useCallback(async()=>{
@@ -50,12 +52,14 @@ export default function AdminVerification(){
   try{
    const {data:auth,error:authErr}=await supabase.auth.getUser();
    if(authErr||!auth.user||auth.user.app_metadata?.role!=="admin"){setAccess("denied");return;}
-   const {data,error:rpcErr}=await supabase.rpc("dc_admin_verification_queue",{p_limit:100});
-   if(rpcErr){setError("No se pudo consultar la cola administrativa.");setAccess("denied");return;}
-   setItems((data||[]) as Request[]);setAccess("allowed");
+   const [queue,replies]=await Promise.all([supabase.rpc("dc_admin_verification_queue",{p_limit:100}),supabase.rpc("dc_verification_responses",{p_limit:100})]);
+   if(queue.error||replies.error){setError("No se pudo consultar la cola administrativa.");setAccess("denied");return;}
+   setItems((queue.data||[]) as Request[]);
+   setResponses((replies.data||[]) as ResponseRow[]);setAccess("allowed");
   }catch{setError("No se pudo conectar al servicio.");setAccess("denied");}
  },[]);
  useEffect(()=>{void load();},[load,refresh]);
+ const responseMap=new Map(responses.map(r=>[r.request_id,r]));
  return <main className="min-h-screen bg-[#071429] px-5 py-20 text-white"><section className="mx-auto max-w-5xl">
   <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#facc15]">DealCapital / Administración</p>
   <h1 className="mt-3 text-3xl font-extrabold md:text-5xl">Revisión de expedientes</h1>
@@ -69,6 +73,7 @@ export default function AdminVerification(){
     <p className="mt-2 break-all text-xs text-[#adc2d9]">ID del solicitante: {item.owner_id}</p>
     <p className="mt-2 text-xs text-[#adc2d9]">Registrada: {new Intl.DateTimeFormat("es-PE",{dateStyle:"medium",timeZone:"America/Lima"}).format(new Date(item.created_at))}</p>
     {item.review_note&&<p className="mt-3 whitespace-pre-wrap rounded-xl bg-[#071429] p-4 text-sm"><strong>Última observación:</strong> {item.review_note}</p>}
+    {responseMap.get(item.id)&&<p className="mt-3 whitespace-pre-wrap rounded-xl border border-[#60718a] p-4 text-sm"><strong>Última subsanación:</strong> {responseMap.get(item.id)?.owner_response}</p>}
     <Review item={item} onSaved={()=>setRefresh(x=>x+1)}/>
    </article>)}</div>}
  </section></main>;

@@ -45,11 +45,28 @@ def driver(request: pytest.FixtureRequest):
     options.add_argument("--window-size=1440,900")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-sandbox")
+    if os.getenv("DC_REQUIRE_ISOLATION") == "1":
+        from qa_preflight import validate_qa_config
+        blockers = validate_qa_config(os.environ, mutations=os.getenv(
+            "DC_ALLOW_STAGING_MUTATIONS") == "YES_ISOLATED_STAGING")
+        if blockers:
+            pytest.fail("QA environment is incomplete or unsafe: " + "; ".join(blockers))
     try:
         session = webdriver.Edge(options=options) if browser == "edge" else webdriver.Chrome(options=options)
     except Exception as exc:
         pytest.fail(f"No se pudo iniciar WebDriver ({browser}): {exc}")
     session.set_page_load_timeout(40)
+    if os.getenv("DC_REQUIRE_ISOLATION") == "1":
+        # Extra network layer: refuse contact with the known production
+        # Supabase host before the test enters ANY credentials.
+        try:
+            session.execute_cdp_cmd("Network.enable", {})
+            session.execute_cdp_cmd("Network.setBlockedURLs", {
+                "urls": ["*://knsqqhucibferrvwjakv.supabase.co/*"]
+            })
+        except Exception as exc:
+            session.quit()
+            pytest.fail(f"Could not block production Supabase in QA browser: {type(exc).__name__}")
     yield session
     if getattr(request.node, "rep_call", None) is not None and request.node.rep_call.failed:
         output = Path(os.getenv("DC_ARTIFACT_DIR", "test-results/screenshots"))
@@ -110,6 +127,21 @@ def login(driver, role: str):
     assert urlparse(driver.current_url).path.startswith("/dashboard"), (
         f"Inicio de sesión {role} no llegó al dashboard; revisar captura de pantalla."
     )
+    if os.getenv("DC_REQUIRE_ISOLATION") == "1":
+        expected_host = os.environ["DC_STAGING_SUPABASE_REF"].lower() + ".supabase.co"
+        def has_verified_staging_origin(d):
+            hosts = d.execute_script("""
+                return [...new Set(performance.getEntriesByType('resource').map(
+                    e => { try { return new URL(e.name).hostname; } catch { return ''; } }
+                ))].filter(h => h.endsWith('.supabase.co'));
+            """)
+            if any(h != expected_host for h in hosts):
+                pytest.fail("QA browser contacted a different Supabase project")
+            return expected_host in hosts
+        WebDriverWait(driver, WAIT).until(
+            has_verified_staging_origin,
+            message="Staging Supabase origin was not observed on the authenticated page"
+        )
 
 
 @pytest.mark.smoke

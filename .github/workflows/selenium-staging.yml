@@ -20,6 +20,9 @@ jobs:
     timeout-minutes: 20
     env:
       DC_BASE_URL: ${{ vars.DC_STAGING_BASE_URL }}
+      DC_STAGING_BASE_URL: ${{ vars.DC_STAGING_BASE_URL }}
+      DC_STAGING_SUPABASE_REF: ${{ vars.DC_STAGING_SUPABASE_REF }}
+      DC_REQUIRE_ISOLATION: "1"
       DC_BROWSER: chrome
       DC_HEADLESS: "1"
       DC_ENTREPRENEUR_EMAIL: ${{ secrets.DC_ENTREPRENEUR_EMAIL }}
@@ -37,16 +40,8 @@ jobs:
           cache: pip
           cache-dependency-path: tests/e2e/requirements.txt
       - run: python -m pip install -r tests/e2e/requirements.txt
-      - name: Confirm QA environment and identities
-        run: |
-          test -n "$DC_BASE_URL"
-          test -n "$DC_ENTREPRENEUR_EMAIL"
-          test -n "$DC_ENTREPRENEUR_PASSWORD"
-          test -n "$DC_INVESTOR_EMAIL"
-          test -n "$DC_INVESTOR_PASSWORD"
-          test -n "$DC_ADMIN_EMAIL"
-          test -n "$DC_ADMIN_PASSWORD"
-          test "$DC_BASE_URL" != "https://deal-capital.vercel.app"
+      - name: Check isolated QA configuration (no secrets printed)
+        run: python tests/e2e/qa_preflight.py --read
       - name: Run all authenticated read-only browser tests
         run: python -m pytest -m auth -v --junitxml=test-results/selenium-auth.xml
       - if: always()
@@ -67,6 +62,7 @@ jobs:
       DC_STAGING_BASE_URL: ${{ vars.DC_STAGING_BASE_URL }}
       DC_STAGING_SUPABASE_REF: ${{ vars.DC_STAGING_SUPABASE_REF }}
       DC_ALLOW_STAGING_MUTATIONS: YES_ISOLATED_STAGING
+      DC_REQUIRE_ISOLATION: "1"
       DC_BROWSER: chrome
       DC_HEADLESS: "1"
       DC_ENTREPRENEUR_EMAIL: ${{ secrets.DC_ENTREPRENEUR_EMAIL }}
@@ -84,15 +80,8 @@ jobs:
           cache: pip
           cache-dependency-path: tests/e2e/requirements.txt
       - run: python -m pip install -r tests/e2e/requirements.txt
-      - name: Refuse unsafe or incomplete staging config
-        run: |
-          test -n "$DC_STAGING_BASE_URL"
-          test -n "$DC_STAGING_SUPABASE_REF"
-          test -n "$DC_ADMIN_EMAIL"
-          test -n "$DC_ENTREPRENEUR_EMAIL"
-          test -n "$DC_INVESTOR_EMAIL"
-          test "$DC_STAGING_BASE_URL" != "https://deal-capital.vercel.app"
-          test "$DC_STAGING_SUPABASE_REF" != "knsqqhucibferrvwjakv"
+      - name: Check isolated QA configuration and explicit mutation opt-in
+        run: python tests/e2e/qa_preflight.py --write
       - name: Run isolated staging verification/project/investment scenarios
         run: python -m pytest -m staging -v --junitxml=test-results/selenium-staging.xml
       - if: always()

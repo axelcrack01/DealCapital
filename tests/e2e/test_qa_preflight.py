@@ -60,9 +60,9 @@ def test_refuses_reused_accounts():
 
 
 @pytest.mark.guard
-def test_refuses_real_production_admin():
+def test_refuses_non_qa_admin_account():
     conf = qa_env()
-    conf["DC_ADMIN_EMAIL"] = "axel.valladares.flores@gmail.com"
+    conf["DC_ADMIN_EMAIL"] = "admin@example.test"
     assert validate_qa_config(conf, mutations=False)
 
 

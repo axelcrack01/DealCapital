@@ -165,6 +165,7 @@ export default function Admin() {
   return <main className="min-h-screen bg-[#020817] text-white">
     <div className="dc-container pb-20 pt-9 md:pt-14">
       <div className="mb-6 flex items-center gap-2 text-xs text-[#93a6c1]"><Link href="/" className="hover:text-[#facc15]">DealCapital</Link><span>/</span><span className="text-[#facc15]">Administración</span></div>
+      <div className="mb-6"><Link href="/admin/solicitudes-verificacion" className="inline-flex rounded-xl border border-[#facc15]/50 px-5 py-3 text-sm font-bold text-[#facc15] hover:bg-[#facc15]/10">Revisar solicitudes de verificación</Link></div>
       <div className="mb-9 flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-end">
         <div className="max-w-3xl">
           <p className="mb-4 text-[11px] font-extrabold uppercase tracking-[.16em] text-[#facc15]">Centro de operaciones / MVP</p>

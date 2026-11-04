@@ -65,6 +65,16 @@ def go(driver, path: str):
     return driver
 
 
+
+def click_visible(driver, element):
+    """Scroll like a real user before attempting a native WebDriver click."""
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'nearest'});", element)
+    WebDriverWait(driver, WAIT).until(
+        lambda d: element.is_displayed() and element.is_enabled()
+    )
+    element.click()
+
+
 def text_present(driver, content: str) -> bool:
     return content.casefold() in driver.find_element(By.TAG_NAME, "body").text.casefold()
 
@@ -231,7 +241,7 @@ def test_opportunity_filters_can_be_reset(driver):
     )
     buttons = driver.find_elements(By.XPATH, "//button[contains(., 'Limpiar filtros')]")
     assert buttons, "Falta la acción para limpiar filtros"
-    buttons[0].click()
+    click_visible(driver, buttons[0])
     assert search.get_attribute("value") == ""
 
 
@@ -274,7 +284,7 @@ def test_public_project_detail_never_links_private_storage(driver):
     )
     if not cards:
         pytest.skip("No hay proyectos aprobados publicados para inspeccionar.")
-    cards[0].click()
+    click_visible(driver, cards[0])
     WebDriverWait(driver, WAIT).until(
         lambda d: urlparse(d.current_url).path.startswith("/oportunidades/")
     )

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 
 export default function Notificaciones() {
@@ -92,6 +93,9 @@ export default function Notificaciones() {
                 <div>
                   <p className="text-yellow-400 font-bold">{n.tipo}</p>
                   <p className="text-slate-300">{n.mensaje}</p>
+                  {["Nueva solicitud de revisión","Subsanación recibida","Solicitud observada","Revisión cerrada","Solicitud en revisión"].includes(n.tipo)&&(
+                    <Link href={["Nueva solicitud de revisión","Subsanación recibida"].includes(n.tipo)?"/admin/solicitudes-verificacion":"/solicitudes-verificacion"} className="mt-3 inline-block text-sm font-bold text-yellow-400 underline underline-offset-4">Ver expediente y línea de tiempo</Link>
+                  )}
                 </div>
 
                 <span className="text-sm text-slate-500">

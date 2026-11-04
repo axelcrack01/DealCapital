@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import VerificationTimeline,{type VerificationEvent} from "../../components/VerificationTimeline";
 import {useCallback,useEffect,useState,type FormEvent} from "react";
 import {supabase} from "../../../lib/supabase";
 type Status="pendiente"|"en_revision"|"observada"|"cerrada";
@@ -45,6 +46,7 @@ export default function AdminVerification(){
  const [access,setAccess]=useState<"loading"|"allowed"|"denied">("loading");
  const [items,setItems]=useState<Request[]>([]);
  const [responses,setResponses]=useState<ResponseRow[]>([]);
+ const [events,setEvents]=useState<VerificationEvent[]>([]);
  const [error,setError]=useState("");
  const [refresh,setRefresh]=useState(0);
  const load=useCallback(async()=>{
@@ -52,10 +54,15 @@ export default function AdminVerification(){
   try{
    const {data:auth,error:authErr}=await supabase.auth.getUser();
    if(authErr||!auth.user||auth.user.app_metadata?.role!=="admin"){setAccess("denied");return;}
-   const [queue,replies]=await Promise.all([supabase.rpc("dc_admin_verification_queue",{p_limit:100}),supabase.rpc("dc_verification_responses",{p_limit:100})]);
-   if(queue.error||replies.error){setError("No se pudo consultar la cola administrativa.");setAccess("denied");return;}
+   const [queue,replies,timeline]=await Promise.all([
+    supabase.rpc("dc_admin_verification_queue",{p_limit:100}),
+    supabase.rpc("dc_verification_responses",{p_limit:100}),
+    supabase.rpc("dc_verification_timeline",{p_limit:500})
+   ]);
+   if(queue.error||replies.error||timeline.error){setError("No se pudo consultar la cola administrativa.");setAccess("denied");return;}
    setItems((queue.data||[]) as Request[]);
-   setResponses((replies.data||[]) as ResponseRow[]);setAccess("allowed");
+   setResponses((replies.data||[]) as ResponseRow[]);
+   setEvents((timeline.data||[]) as VerificationEvent[]);setAccess("allowed");
   }catch{setError("No se pudo conectar al servicio.");setAccess("denied");}
  },[]);
  useEffect(()=>{void load();},[load,refresh]);
@@ -75,6 +82,7 @@ export default function AdminVerification(){
     {item.review_note&&<p className="mt-3 whitespace-pre-wrap rounded-xl bg-[#071429] p-4 text-sm"><strong>Última observación:</strong> {item.review_note}</p>}
     {responseMap.get(item.id)&&<p className="mt-3 whitespace-pre-wrap rounded-xl border border-[#60718a] p-4 text-sm"><strong>Última subsanación:</strong> {responseMap.get(item.id)?.owner_response}</p>}
     <Review item={item} onSaved={()=>setRefresh(x=>x+1)}/>
+    <VerificationTimeline requestId={item.id} events={events}/>
    </article>)}</div>}
  </section></main>;
 }

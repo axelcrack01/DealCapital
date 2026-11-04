@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import VerificationTimeline,{type VerificationEvent} from "../components/VerificationTimeline";
 import OwnerResponse from "./OwnerResponse";
 import {useCallback,useEffect,useState} from "react";
 import {supabase} from "../../lib/supabase";
@@ -14,6 +15,7 @@ const date=(s:string)=>new Intl.DateTimeFormat("es-PE",{dateStyle:"medium",timeS
 export default function SolicitudesVerificacion(){
  const [items,setItems]=useState<Request[]>([]);
  const [responses,setResponses]=useState<ResponseRow[]>([]);
+ const [events,setEvents]=useState<VerificationEvent[]>([]);
  const [state,setState]=useState<"loading"|"ready"|"login"|"error">("loading");
  const [saving,setSaving]=useState<"perfil"|"empresa"|null>(null);
  const [notice,setNotice]=useState("");
@@ -21,13 +23,15 @@ export default function SolicitudesVerificacion(){
   setState("loading");
   const {data:auth,error:authError}=await supabase.auth.getUser();
   if(authError||!auth.user){setState("login");return;}
-  const [requestsResult,responsesResult]=await Promise.all([
+  const [requestsResult,responsesResult,timelineResult]=await Promise.all([
    supabase.rpc("dc_my_verification_requests"),
-   supabase.rpc("dc_verification_responses",{p_limit:100})
+   supabase.rpc("dc_verification_responses",{p_limit:100}),
+   supabase.rpc("dc_verification_timeline",{p_limit:500})
   ]);
-  if(requestsResult.error||responsesResult.error){setState("error");return;}
+  if(requestsResult.error||responsesResult.error||timelineResult.error){setState("error");return;}
   setItems((requestsResult.data||[]) as Request[]);
-  setResponses((responsesResult.data||[]) as ResponseRow[]);setState("ready");
+  setResponses((responsesResult.data||[]) as ResponseRow[]);
+  setEvents((timelineResult.data||[]) as VerificationEvent[]);setState("ready");
  },[]);
  useEffect(()=>{void load();},[load]);
  const submit=async(type:"perfil"|"empresa")=>{
@@ -73,6 +77,7 @@ export default function SolicitudesVerificacion(){
       {responseMap.get(r.id)&&<p className="mt-3 whitespace-pre-wrap rounded-lg border border-[#3c5976] p-4 text-sm leading-6 text-[#d6e2f1]"><strong>Última subsanación enviada:</strong> {responseMap.get(r.id)?.owner_response}</p>}
       {r.status==="observada"&&<OwnerResponse requestId={r.id} onSubmitted={()=>void load()}/>}
       {r.status==="cerrada"&&<p className="mt-3 text-xs leading-6 text-amber-200">Expediente cerrado administrativamente; no equivale a identidad verificada ni certificación financiera.</p>}
+      <VerificationTimeline requestId={r.id} events={events}/>
      </article>)}</div>}
     </>}
   </section>
